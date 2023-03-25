@@ -1,16 +1,10 @@
 import express from 'express';
+import userRouter from './routes/user.routes.js';
 const app = express();
-const port = 4000;
+const port = 8080;
 
-app.get('/user', (req, res) => {
-  res.set('Access-Control-Allow-Origin', '*');
-  res.send({ msg: 'user!' });
-});
-
-app.delete('/user', (req, res) => {
-  res.set('Access-Control-Allow-Origin', '*');
-  res.send({ msg: 'delete user!' });
-});
+app.use('/', userRouter);
+app.use(express.json());
 
 app.listen(port, () => {
   console.log(`Example app listening on port ${port}`);
