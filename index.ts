@@ -1,9 +1,15 @@
 const express = require('express');
 const app = express();
-const port = 3000;
+const port = 4000;
 
-app.get('/', (req, res) => {
-  res.send('Hello World!');
+app.get('/user', (req, res) => {
+  res.set('Access-Control-Allow-Origin', '*');
+  res.send({ msg: 'user!' });
+});
+
+app.delete('/user', (req, res) => {
+  res.set('Access-Control-Allow-Origin', '*');
+  res.send({ msg: 'delete user!' });
 });
 
 app.listen(port, () => {
