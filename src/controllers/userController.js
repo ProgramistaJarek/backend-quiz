@@ -1,18 +1,14 @@
-import { RequestHandler } from 'express';
 import { User } from '../models/user.model.js';
 
-const Users: User[] = [];
+const Users = [];
 
-export const getUsers: RequestHandler = (req, res) => {
+export const getUsers = (req, res) => {
   res.json(Users);
 };
 
-export const createUser: RequestHandler = (req, res) => {
+export const createUser = (req, res) => {
   console.log(req.body);
-  const { firstName, lastName } = req.body as {
-    firstName: string;
-    lastName: string;
-  };
+  const { firstName, lastName } = req.body;
   const id = Math.floor(Math.random() * 100);
   const newUser = new User(id, firstName, lastName);
   Users.push(newUser);
@@ -21,7 +17,7 @@ export const createUser: RequestHandler = (req, res) => {
     .json({ message: 'User created successfully', createdUser: newUser });
 };
 
-export const deleteUser: RequestHandler = (req, res) => {
+export const deleteUser = (req, res) => {
   const id = Number(req.params.id);
   const userId = Users.findIndex((x) => x.id === id);
   if (userId < 0) {
