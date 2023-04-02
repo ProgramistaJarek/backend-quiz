@@ -1,12 +1,12 @@
-import { User } from '../models/user.model.js';
+const User = require('../models/user.model');
 
 const Users = [];
 
-export const getUsers = (req, res) => {
+const getUsers = (req, res) => {
   res.json(Users);
 };
 
-export const createUser = (req, res) => {
+const createUser = (req, res) => {
   console.log(req.body);
   const { firstName, lastName } = req.body;
   const id = Math.floor(Math.random() * 100);
@@ -17,7 +17,7 @@ export const createUser = (req, res) => {
     .json({ message: 'User created successfully', createdUser: newUser });
 };
 
-export const deleteUser = (req, res) => {
+const deleteUser = (req, res) => {
   const id = Number(req.params.id);
   const userId = Users.findIndex((x) => x.id === id);
   if (userId < 0) {
@@ -30,4 +30,10 @@ export const deleteUser = (req, res) => {
   res.status(201).json({
     message: `${deletedData.id}: ${deletedData.text} deleted successfully`,
   });
+};
+
+module.exports = {
+  getUsers,
+  createUser,
+  deleteUser,
 };

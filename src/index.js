@@ -1,6 +1,7 @@
-import express from 'express';
-import { errorHandeler } from './middlewares/errorHandeler.js';
-import userRouter from './routes/user.routes.js';
+const express = require('express');
+const userRouter = require('./routes/user.routes');
+const errorHandeler = require('./middlewares/errorHandeler');
+
 const app = express();
 const port = process.env.PORT || 4000;
 
