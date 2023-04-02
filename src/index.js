@@ -2,7 +2,7 @@ import express from 'express';
 import { errorHandeler } from './middlewares/errorHandeler.js';
 import userRouter from './routes/user.routes.js';
 const app = express();
-const port = process.env.port || 8080;
+const port = process.env.PORT || 4000;
 
 app.use(express.json());
 app.use('/user', userRouter);
