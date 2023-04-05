@@ -1,15 +1,18 @@
 const User = require('../models/user.model');
+const { v4: uuidv4 } = require('uuid');
+const db = require('../configs/db');
 
 const Users = [];
 
-const getUsers = (req, res) => {
-  res.json(Users);
+const getUsers = async (req, res) => {
+  const rows = await db.query(`SELECT * FROM Users`);
+  res.json({ usersLocal: Users, db: rows });
 };
 
 const createUser = (req, res) => {
   console.log(req.body);
   const { firstName, lastName } = req.body;
-  const id = Math.floor(Math.random() * 100);
+  const id = uuidv4();
   const newUser = new User(id, firstName, lastName);
   Users.push(newUser);
   res
