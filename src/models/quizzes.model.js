@@ -1,14 +1,12 @@
 const db = require('../configs/db');
+const Model = require('./main.model');
 
-class Quizzes {
-  constructor(ID, AuthorID, TypeID, Name) {
-    this.ID = ID;
-    this.AuthorID = AuthorID;
-    this.TypeID = TypeID;
-    this.Name = Name;
+class Quizzes extends Model {
+  constructor() {
+    super('Quizzes');
   }
 
-  static async findAll() {
+  /* static async findAll() {
     return new Promise((resolve, reject) => {
       db.query('SELECT * FROM Quizzes', (error, results) => {
         if (error) {
@@ -96,7 +94,7 @@ class Quizzes {
         },
       );
     });
-  }
+  } */
 }
 
 module.exports = Quizzes;

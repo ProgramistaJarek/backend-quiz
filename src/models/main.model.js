@@ -2,7 +2,6 @@ const db = require('../configs/db');
 
 class Model {
   constructor(table) {
-    console.log(`Table name: ${table}`);
     this.table = table;
   }
 
@@ -34,59 +33,57 @@ class Model {
     });
   }
 
-  /* //insert data via object such as {id: 1, title: 'Hello MySQL'}
-  static async create(data) {
-    let _this = this;
+  async create(data) {
     return new Promise((resolve, reject) => {
-      db.query('INSERT INTO ?? SET ?', [_this.table, data], (error, result) => {
-        if (error) throw error;
-        let data = _this.find(result.insertId);
-        data
-          .then(function (value) {
-            myResolve(value);
-          })
-          .catch(function (error) {
-            myReject(error);
-          });
+      db.query('INSERT INTO ?? SET ?', [this.table, data], (error, result) => {
+        if (error) reject(error);
+
+        if (result) {
+          this.findById(result.insertId)
+            .then((value) => {
+              resolve(value);
+            })
+            .catch((error) => {
+              reject(error);
+            });
+        }
       });
     });
   }
 
-  //update row and return new data as an object
-  static async update(id, data) {
-    let _this = this;
+  async update(id, data) {
     return new Promise((resolve, reject) => {
       db.query(
-        'UPDATE  ?? SET ? WHERE id = ?',
-        [_this.table, data, id],
-        function (error, result) {
-          if (error) throw error;
-          let data = _this.find(id);
-          data
-            .then(function (value) {
-              myResolve(value);
+        'UPDATE ?? SET ? WHERE id = ?',
+        [this.table, data, id],
+        (error, result) => {
+          if (error) reject(error);
+
+          this.findById(id)
+            .then((value) => {
+              resolve(value);
             })
-            .catch(function (error) {
-              myReject(error);
+            .catch((error) => {
+              reject(error);
             });
         },
       );
     });
   }
 
-  static async delete(id) {
-    let _this = this;
+  async delete(id) {
     return new Promise((resolve, reject) => {
       db.query(
-        'DELETE FROM  ??  WHERE id = ?',
-        [_this.table, id],
+        'DELETE FROM ?? WHERE id = ?',
+        [this.table, id],
         function (error, result) {
-          if (error) throw error;
-          myResolve(result);
+          if (error) reject(error);
+
+          resolve();
         },
       );
     });
-  } */
+  }
 }
 
 module.exports = Model;
