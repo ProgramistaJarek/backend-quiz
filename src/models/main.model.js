@@ -23,8 +23,9 @@ class Model {
         (error, result) => {
           if (error) reject(error);
 
-          if (result.length === 0) {
+          if (result === undefined || result?.length === 0) {
             reject(new Error(`Item with ID ${id} not found`));
+            return;
           }
 
           resolve(result[0]);

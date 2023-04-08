@@ -8,6 +8,11 @@ var cors = require('cors');
 var indexRouter = require('./src/routes/index.routes');
 var usersRouter = require('./src/routes/users.routes');
 var quizzesRouter = require('./src/routes/quizzes.routes');
+var resultsRouter = require('./src/routes/results.routes');
+var answersRouter = require('./src/routes/answers.routes');
+var questionTypesRouter = require('./src/routes/question-types.routes');
+var quizTypesRouter = require('./src/routes/quiz-types.routes');
+var questionsRouter = require('./src/routes/questions.routes');
 
 var app = express();
 
@@ -25,6 +30,11 @@ app.use(cors());
 app.use('/', indexRouter);
 app.use('/users', usersRouter);
 app.use('/quizzes', quizzesRouter);
+app.use('/results', resultsRouter);
+app.use('/answers', answersRouter);
+app.use('/question-type', questionTypesRouter);
+app.use('/quiz-type', quizTypesRouter);
+app.use('/questions', questionsRouter);
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
