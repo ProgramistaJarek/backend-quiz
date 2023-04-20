@@ -1,7 +1,9 @@
+const bcrypt = require('bcrypt');
 const UserModel = require('../models/user.model');
 const generateAccessToken = require('../utils/generateToken');
 const BadRequestError = require('../errors/bad-request');
 const CustomAPIError = require('../errors/custom-api');
+const { error } = require('console');
 
 const loginUser = async (req, res, next) => {
   const model = new UserModel();
@@ -15,7 +17,9 @@ const loginUser = async (req, res, next) => {
     return next(error);
   }
 
-  if (!existingUser || existingUser.Password != password) {
+  try {
+    if (!(await bcrypt.compare(password, existingUser.Password))) throw error;
+  } catch {
     const error = new CustomAPIError('Wrong details please check at once');
     return next(error);
   }
@@ -36,10 +40,15 @@ const signupUser = async (req, res, next) => {
   const model = new UserModel();
   const { username, password } = req.body;
 
+  let passwordHash;
+  await bcrypt.hash(password, 10).then(function (hash) {
+    passwordHash = hash;
+  });
+
   try {
-    await model.signUp(username, password);
+    await model.signUp(username, passwordHash);
   } catch {
-    const error = new BadRequestError('Error! Something went wrong.1');
+    const error = new BadRequestError('Error! Something went wrong');
     return next(error);
   }
 
