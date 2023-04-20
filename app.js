@@ -14,6 +14,8 @@ var questionTypesRouter = require('./src/routes/question-types.routes');
 var quizTypesRouter = require('./src/routes/quiz-types.routes');
 var questionsRouter = require('./src/routes/questions.routes');
 
+var notFoundMiddleware = require('./src/middleware/not-found');
+
 var app = express();
 
 // view engine setup
@@ -35,6 +37,8 @@ app.use('/answers', answersRouter);
 app.use('/question-type', questionTypesRouter);
 app.use('/quiz-type', quizTypesRouter);
 app.use('/questions', questionsRouter);
+
+app.use(notFoundMiddleware);
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
