@@ -13,8 +13,10 @@ var answersRouter = require('./src/routes/answers.routes');
 var questionTypesRouter = require('./src/routes/question-types.routes');
 var quizTypesRouter = require('./src/routes/quiz-types.routes');
 var questionsRouter = require('./src/routes/questions.routes');
+var authorizationRouter = require('./src/routes/authorization.routes');
 
 var notFoundMiddleware = require('./src/middleware/not-found');
+var errorHandlerMiddleware = require('./src/middleware/error-handler');
 
 var app = express();
 
@@ -37,10 +39,12 @@ app.use('/answers', answersRouter);
 app.use('/question-type', questionTypesRouter);
 app.use('/quiz-type', quizTypesRouter);
 app.use('/questions', questionsRouter);
+app.use('/auth', authorizationRouter);
 
 app.use(notFoundMiddleware);
+app.use(errorHandlerMiddleware);
 
-// catch 404 and forward to error handler
+/* // catch 404 and forward to error handler
 app.use(function (req, res, next) {
   next(createError(404));
 });
@@ -53,6 +57,6 @@ app.use(function (err, req, res, next) {
 
   // render the error page
   res.status(err.status || 500).send('Internal server error');
-});
+}); */
 
 module.exports = app;

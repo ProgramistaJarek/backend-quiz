@@ -6,101 +6,41 @@ class User extends Model {
     super('Users');
   }
 
-  /* static async findAll() {
-    return new Promise((resolve, reject) => {
-      db.query('SELECT * FROM Users', (error, results) => {
-        if (error) {
-          reject(error);
-        }
-
-        if (results) {
-          const user = results.map(
-            (result) => new User(result.ID, result.Nickname, result.Password),
-          );
-          resolve(user);
-        }
-      });
-    });
-  }
-
-  static async findById(id) {
-    return new Promise((resolve, reject) => {
-      db.query('SELECT * FROM Users WHERE ID = ?', [id], (error, results) => {
-        if (error) {
-          reject(error);
-        }
-
-        if (results.length === 0) {
-          reject(new Error(`User with ID ${id} not found`));
-        }
-
-        if (results.length >= 1) {
-          const user = results.map(
-            (result) => new User(result.ID, result.Nickname, result.Password),
-          );
-          resolve(user);
-        }
-      });
-    });
-  } */
-
-  /* static async createUser({ nickname, password }) {
+  async findByUsername(username) {
     return new Promise((resolve, reject) => {
       db.query(
-        'INSERT INTO Users (Nickname, Password) VALUES (?, ?)',
-        [nickname, password],
-        (error, results) => {
-          if (error) {
-            reject(error);
-          }
+        'SELECT * FROM ?? WHERE Nickname = ?',
+        [this.table, username],
+        (error, result) => {
+          if (error) reject(error);
 
-          if (!results?.affectedRows) {
-            reject(new Error(`User cannot be created`));
-          } else {
-            resolve();
-          }
+          resolve(result[0]);
         },
       );
     });
   }
 
-  static async updateUser(id, { Nickname, Password }) {
+  async signUp(username, password) {
     return new Promise((resolve, reject) => {
       db.query(
-        'UPDATE Users SET Nickname = ?, Password = ? WHERE ID = ?',
-        [Nickname, Password, id],
-        (error, results) => {
-          if (error) {
-            reject(error);
-          }
+        'INSERT INTO ?? (Nickname, Password) VALUES (?, ?)',
+        [this.table, username, password],
+        (error, result) => {
+          if (error) reject(error);
 
-          if (results.affectedRows === 0) {
-            reject(new Error(`User with ID ${id} not found`));
-          } else {
-            resolve(results);
+          if (result) {
+            this.findById(result.insertId)
+              .then((value) => {
+                resolve(value);
+              })
+              .catch((error) => {
+                reject(error);
+              });
           }
         },
       );
     });
   }
-
-  static async deleteUser(id) {
-    return new Promise((resolve, reject) => {
-      db.query('DELETE FROM Users WHERE ID = ?', [id], (error, results) => {
-        if (error) {
-          reject(error);
-        }
-
-        if (results.affectedRows === 0) {
-          reject(new Error(`User with ID ${id} not found`));
-        }
-
-        if (results.affectedRows) {
-          resolve();
-        }
-      });
-    });
-  } */
 }
 
 module.exports = User;
