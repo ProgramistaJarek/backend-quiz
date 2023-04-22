@@ -20,7 +20,7 @@ const loginUser = async (req, res, next) => {
   try {
     if (!(await bcrypt.compare(password, existingUser.Password))) throw error;
   } catch {
-    const error = new CustomAPIError('Wrong details please check at once');
+    const error = new BadRequestError('Wrong details please check at once');
     return next(error);
   }
 
@@ -53,7 +53,7 @@ const signupUser = async (req, res, next) => {
   try {
     existingUser = await model.signUp(username, passwordHash);
   } catch {
-    const error = new CustomAPIError('username');
+    const error = new CustomAPIError('Error! Username is taken');
     return next(error);
   }
 
