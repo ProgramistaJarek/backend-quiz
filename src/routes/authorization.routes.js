@@ -3,15 +3,11 @@ var router = express.Router();
 
 const auth = require('../controllers/authorization.controller');
 const authenticateToken = require('../utils/authenticateToken');
-const jwt = require('jsonwebtoken');
-require('dotenv').config();
+const logoutToken = require('../utils/logout');
 
 router.post('/login', auth.loginUser);
 router.post('/signup', auth.signupUser);
-router.get('/tak', authenticateToken, (req, res) => {
-  res
-    .status(200)
-    .json({ success: false, message: 'Error! Token was not provided.' });
-});
+router.post('/logout', authenticateToken, logoutToken);
+router.get('/getUser', authenticateToken, auth.getUser);
 
 module.exports = router;

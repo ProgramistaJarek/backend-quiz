@@ -25,13 +25,17 @@ const loginUser = async (req, res, next) => {
   }
 
   try {
-    const token = generateAccessToken({ username: req.body.username });
+    const token = generateAccessToken({
+      username: existingUser.Nickname,
+      id: existingUser.ID,
+    });
     res.status(200).json({
+      id: existingUser.ID,
       Nickname: existingUser.Nickname,
       token: token,
     });
   } catch (err) {
-    const error = new ErroCustomAPIErrorr('Error! Something went wrong.');
+    const error = new CustomAPIError('Error! Something went wrong.');
     return next(error);
   }
 };
@@ -45,21 +49,46 @@ const signupUser = async (req, res, next) => {
     passwordHash = hash;
   });
 
+  let existingUser;
   try {
-    await model.signUp(username, passwordHash);
+    existingUser = await model.signUp(username, passwordHash);
   } catch {
-    const error = new BadRequestError('Error! Something went wrong');
+    const error = new CustomAPIError('username');
     return next(error);
   }
 
   try {
-    const token = generateAccessToken({ username: req.body.username });
+    const token = generateAccessToken({
+      username: existingUser.Nickname,
+      id: existingUser.ID,
+    });
     res.status(201).json({
-      Nickname: username,
+      id: existingUser.ID,
+      Nickname: existingUser.Nickname,
       token: token,
     });
   } catch (err) {
-    const error = new ErroCustomAPIErrorr('Error! Something went wrong.');
+    const error = new CustomAPIError('Error! Something went wrong.');
+    return next(error);
+  }
+};
+
+const logoutUser = async (req, res, next) => {
+  logoutToken();
+};
+
+const getUser = async (req, res, next) => {
+  const model = new UserModel();
+
+  try {
+    existingUser = await model.findById(req.user.id);
+    res.status(200).json({
+      ID: existingUser.ID,
+      Nickname: existingUser.Nickname,
+      token: req.user.token,
+    });
+  } catch {
+    const error = new BadRequestError('Error! Something went wrong.');
     return next(error);
   }
 };
@@ -67,4 +96,6 @@ const signupUser = async (req, res, next) => {
 module.exports = {
   loginUser,
   signupUser,
+  logoutUser,
+  getUser,
 };
