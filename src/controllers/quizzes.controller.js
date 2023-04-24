@@ -1,4 +1,6 @@
 const QuizzesModel = require('../models/quizzes.model');
+const QuestionsModel = require('../models/questions.model');
+const AnswersModel = require('../models/answers.model');
 
 const getQuizzes = async (req, res) => {
   const model = new QuizzesModel();
@@ -85,10 +87,42 @@ const deleteQuizById = async (req, res) => {
   }
 };
 
+const getQuiz = async (req, res) => {
+  const model = new QuizzesModel();
+  const questionsModel = new QuestionsModel();
+  const answersModel = new AnswersModel();
+  const quizId = req.params.id;
+
+  try {
+    const quiz = await model.findById(quizId);
+    const questionsByQuizId = await questionsModel.getQuestionsWithTypeByQuizId(
+      quizId,
+    );
+    const questions = [];
+    for (const question of questionsByQuizId) {
+      const questionId = question.ID;
+      const answersForQuestion = await answersModel.getAnswersForQuestion(
+        questionId,
+      );
+      questions.push({ question, answers: answersForQuestion });
+    }
+
+    res.json({ quiz, questions });
+  } catch (error) {
+    if (error?.message) {
+      res.status(404).json({ error: error.message });
+    } else {
+      console.error(error);
+      res.status(500).send('Internal server error');
+    }
+  }
+};
+
 module.exports = {
   getQuizzes,
   getQuizById,
   createQuiz,
   updateQuiz,
   deleteQuizById,
+  getQuiz,
 };
