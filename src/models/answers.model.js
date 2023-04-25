@@ -9,7 +9,7 @@ class Answers extends Model {
   getAnswersForQuestion(id) {
     return new Promise((resolve, reject) => {
       db.query(
-        'SELECT Answer, IsCorrect, Path FROM ?? WHERE QuestionID = ?;',
+        'SELECT ID, Answer, IsCorrect, Path FROM ?? WHERE QuestionID = ?;',
         [this.table, id],
         (error, result) => {
           if (error) reject(error);

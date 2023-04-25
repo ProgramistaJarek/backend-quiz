@@ -2,6 +2,9 @@ const QuizzesModel = require('../models/quizzes.model');
 const QuestionsModel = require('../models/questions.model');
 const AnswersModel = require('../models/answers.model');
 
+const CustomAPIError = require('../errors/custom-api');
+const BadRequestError = require('../errors/bad-request');
+
 const getQuizzes = async (req, res) => {
   const model = new QuizzesModel();
 
@@ -31,15 +34,72 @@ const getQuizById = async (req, res) => {
   }
 };
 
-const createQuiz = async (req, res) => {
+const createQuiz = async (req, res, next) => {
   const model = new QuizzesModel();
+  const questionsModel = new QuestionsModel();
+  const answersModel = new AnswersModel();
 
   try {
-    await model.create(req.body);
+    let minNumberOfAnswers = 0;
+    let countCorrectNumberOfAnswers = 0;
+
+    req.body.questions.map((data) => {
+      if (data.answers.length <= 1) throw new Error();
+      countCorrectNumberOfAnswers = 0;
+      minNumberOfAnswers = data.question.Type === 'checkbox' ? 2 : 1;
+
+      data.answers.map((answer) => {
+        if (answer.IsCorrect >= 1) countCorrectNumberOfAnswers++;
+      });
+
+      if (!(countCorrectNumberOfAnswers >= minNumberOfAnswers))
+        throw new Error();
+    });
+  } catch (err) {
+    const error = new BadRequestError('Error! Something went wrong.');
+    return next(error);
+  }
+
+  let quiz;
+  try {
+    quiz = await model.create({
+      ...req.body.quiz,
+      AuthorID: req.user.id,
+    });
+    // res.status(201).json({ message: `Quiz has been created` });
+  } catch (error) {
+    if (error?.message) {
+      const err = new BadRequestError(error.message);
+      return next(err);
+    } else {
+      console.error(error);
+      res.status(500).send('Internal server error');
+    }
+  }
+
+  try {
+    let question;
+    let questionType;
+    req.body.questions.map(async (data) => {
+      if (data.question.Type === 'checkbox') questionType = 1;
+      else if (data.question.Type === 'radio') questionType = 2;
+      else if (data.question.Type === 'boolean') questionType = 3;
+      delete data.question['Type'];
+      question = await questionsModel.create({
+        ...data.question,
+        QuizID: quiz.ID,
+        TypeID: questionType,
+      });
+
+      data.answers.map(async (answer) => {
+        answersModel.create({ ...answer, QuestionID: question.ID });
+      });
+    });
     res.status(201).json({ message: `Quiz has been created` });
   } catch (error) {
     if (error?.message) {
-      res.status(404).json({ error: error.message });
+      const err = new BadRequestError(error.message);
+      return next(err);
     } else {
       console.error(error);
       res.status(500).send('Internal server error');
@@ -94,7 +154,7 @@ const getQuiz = async (req, res) => {
   const quizId = req.params.id;
 
   try {
-    const quiz = await model.findById(quizId);
+    let quiz = await model.findById(quizId);
     const questionsByQuizId = await questionsModel.getQuestionsWithTypeByQuizId(
       quizId,
     );
@@ -107,6 +167,10 @@ const getQuiz = async (req, res) => {
       questions.push({ question, answers: answersForQuestion });
     }
 
+    quiz = {
+      ...quiz,
+      isEditable: quiz.AuthorID === req.user.id,
+    };
     res.json({ quiz, questions });
   } catch (error) {
     if (error?.message) {
