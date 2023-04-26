@@ -127,19 +127,35 @@ const updateQuiz = async (req, res) => {
   }
 };
 
-const deleteQuizById = async (req, res) => {
+const deleteQuizById = async (req, res, next) => {
   const model = new QuizzesModel();
   const quizId = req.params.id;
 
+  let quiz;
   try {
-    await model.findById(quizId);
+    quiz = await model.findById(quizId);
+
+    if (quiz.AuthorID !== req.user.id)
+      throw new Error('You cannot delete this quiz');
+  } catch (error) {
+    if (error?.message) {
+      const err = new BadRequestError(error.message);
+      return next(err);
+    } else {
+      console.error(error);
+      res.status(500).send('Internal server error');
+    }
+  }
+
+  try {
     await model.delete(quizId);
     res
       .status(200)
       .json({ message: `Quiz with ID ${quizId} has been deleted` });
   } catch (error) {
     if (error?.message) {
-      res.status(404).json({ error: error.message });
+      const err = new BadRequestError(error.message);
+      return next(err);
     } else {
       console.error(error);
       res.status(500).send('Internal server error');
