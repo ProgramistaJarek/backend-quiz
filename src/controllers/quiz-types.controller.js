@@ -51,7 +51,15 @@ const createQuizType = async (req, res, next) => {
   }
 
   try {
-    await model.create(req.body);
+    const response = await model.findAll();
+    response.forEach((e) => {
+      if (
+        e.Type.replace(/\s+/g, '').toLowerCase() ===
+        req.body.Type.replace(/\s+/g, '').toLowerCase()
+      )
+        throw new Error('Type actully exist');
+    });
+    await model.create({ Type: req.body.Type.replace(/\s+/g, ' ') });
     res.status(201).json({ message: `Quiz type has been created` });
   } catch (error) {
     if (error?.message) {
@@ -81,6 +89,14 @@ const updateQuizType = async (req, res, next) => {
 
   try {
     await model.findById(quizTypeId);
+    const response = await model.findAll();
+    response.forEach((e) => {
+      if (
+        e.Type.replace(/\s+/g, '').toLowerCase() ===
+        req.body.Type.replace(/\s+/g, '').toLowerCase()
+      )
+        throw new Error('Type actully exist');
+    });
     await model.update(quizTypeId, quizTypeBody);
     res.status(201).json({ message: `Quiz type has been updated` });
   } catch (error) {

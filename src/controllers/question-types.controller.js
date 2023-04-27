@@ -89,6 +89,14 @@ const updateQuestionType = async (req, res, next) => {
 
   try {
     await model.findById(questionTypeId);
+    const response = await model.findAll();
+    response.forEach((e) => {
+      if (
+        e.Type.replace(/\s+/g, '').toLowerCase() ===
+        req.body.Type.replace(/\s+/g, '').toLowerCase()
+      )
+        throw new Error('Type actully exist');
+    });
     await model.update(questionTypeId, questionTypeBody);
     res.status(201).json({ message: `Question typw has been updated` });
   } catch (error) {

@@ -2,7 +2,6 @@ const QuizzesModel = require('../models/quizzes.model');
 const QuestionsModel = require('../models/questions.model');
 const AnswersModel = require('../models/answers.model');
 
-const CustomAPIError = require('../errors/custom-api');
 const BadRequestError = require('../errors/bad-request');
 
 const getQuizzes = async (req, res) => {
@@ -17,16 +16,22 @@ const getQuizzes = async (req, res) => {
   }
 };
 
-const getQuizById = async (req, res) => {
+const getQuizById = async (req, res, next) => {
   const model = new QuizzesModel();
   const quizId = req.params.id;
+
+  if (isNaN(quizId)) {
+    const err = new BadRequestError('Error! You need to provide valid id.');
+    return next(err);
+  }
 
   try {
     const quizzes = await model.findById(quizId);
     res.json({ quizzes });
   } catch (error) {
     if (error?.message) {
-      res.status(404).json({ error: error.message });
+      const err = new BadRequestError(error.message);
+      return next(err);
     } else {
       console.error(error);
       res.status(500).send('Internal server error');
@@ -66,7 +71,6 @@ const createQuiz = async (req, res, next) => {
       ...req.body.quiz,
       AuthorID: req.user.id,
     });
-    // res.status(201).json({ message: `Quiz has been created` });
   } catch (error) {
     if (error?.message) {
       const err = new BadRequestError(error.message);
@@ -107,10 +111,15 @@ const createQuiz = async (req, res, next) => {
   }
 };
 
-const updateQuiz = async (req, res) => {
+const updateQuiz = async (req, res, next) => {
   const model = new QuizzesModel();
   const quizId = req.params.id;
   const quizReq = req.body;
+
+  if (isNaN(quizId)) {
+    const err = new BadRequestError('Error! You need to provide valid id.');
+    return next(err);
+  }
 
   try {
     const quiz = await model.findById(quizId);
@@ -130,6 +139,11 @@ const updateQuiz = async (req, res) => {
 const deleteQuizById = async (req, res, next) => {
   const model = new QuizzesModel();
   const quizId = req.params.id;
+
+  if (isNaN(quizId)) {
+    const err = new BadRequestError('Error! You need to provide valid id.');
+    return next(err);
+  }
 
   let quiz;
   try {
@@ -163,11 +177,16 @@ const deleteQuizById = async (req, res, next) => {
   }
 };
 
-const getQuiz = async (req, res) => {
+const getQuiz = async (req, res, next) => {
   const model = new QuizzesModel();
   const questionsModel = new QuestionsModel();
   const answersModel = new AnswersModel();
   const quizId = req.params.id;
+
+  if (isNaN(quizId)) {
+    const err = new BadRequestError('Error! You need to provide valid id.');
+    return next(err);
+  }
 
   try {
     let quiz = await model.findById(quizId);
@@ -190,7 +209,8 @@ const getQuiz = async (req, res) => {
     res.json({ quiz, questions });
   } catch (error) {
     if (error?.message) {
-      res.status(404).json({ error: error.message });
+      const err = new BadRequestError(error.message);
+      return next(err);
     } else {
       console.error(error);
       res.status(500).send('Internal server error');
