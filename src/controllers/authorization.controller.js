@@ -2,45 +2,29 @@ const bcrypt = require('bcrypt');
 const UserModel = require('../models/user.model');
 const generateAccessToken = require('../utils/generateToken');
 const BadRequestError = require('../errors/bad-request');
-const CustomAPIError = require('../errors/custom-api');
-const { error } = require('console');
 
-const loginUser = async (req, res, next) => {
+const loginUser = async (req, res) => {
   const model = new UserModel();
   let { username, password } = req.body;
 
-  let existingUser;
-  try {
-    existingUser = await model.findByUsername(username);
-  } catch {
-    const error = new BadRequestError('Error! Something went wrong.');
-    return next(error);
-  }
+  const existingUser = await model.findByUsername(username);
+  if (!existingUser) throw new BadRequestError('User do not exist');
 
-  try {
-    if (!(await bcrypt.compare(password, existingUser.Password))) throw error;
-  } catch {
-    const error = new BadRequestError('Wrong details please check at once');
-    return next(error);
-  }
+  if (!(await bcrypt.compare(password, existingUser.Password)))
+    throw new BadRequestError('Wrong details please check at once');
 
-  try {
-    const token = generateAccessToken({
-      username: existingUser.Nickname,
-      id: existingUser.ID,
-    });
-    res.status(200).json({
-      id: existingUser.ID,
-      Nickname: existingUser.Nickname,
-      token: token,
-    });
-  } catch (err) {
-    const error = new CustomAPIError('Error! Something went wrong.');
-    return next(error);
-  }
+  const token = generateAccessToken({
+    username: existingUser.Nickname,
+    id: existingUser.ID,
+  });
+  res.status(200).json({
+    id: existingUser.ID,
+    Nickname: existingUser.Nickname,
+    token: token,
+  });
 };
 
-const signupUser = async (req, res, next) => {
+const signupUser = async (req, res) => {
   const model = new UserModel();
   const { username, password } = req.body;
 
@@ -49,53 +33,37 @@ const signupUser = async (req, res, next) => {
     passwordHash = hash;
   });
 
-  let existingUser;
-  try {
-    existingUser = await model.signUp(username, passwordHash);
-  } catch {
-    const error = new CustomAPIError('Error! Username is taken');
-    return next(error);
-  }
+  const existingUser = await model.signUp(username, passwordHash);
+  if (!existingUser) throw new BadRequestError('Error! Username is taken');
 
-  try {
-    const token = generateAccessToken({
-      username: existingUser.Nickname,
-      id: existingUser.ID,
-    });
-    res.status(201).json({
-      id: existingUser.ID,
-      Nickname: existingUser.Nickname,
-      token: token,
-    });
-  } catch (err) {
-    const error = new CustomAPIError('Error! Something went wrong.');
-    return next(error);
-  }
+  const token = generateAccessToken({
+    username: existingUser.Nickname,
+    id: existingUser.ID,
+  });
+  if (!token) throw new BadRequestError('Error! Something went wrong.');
+
+  res.status(201).json({
+    id: existingUser.ID,
+    Nickname: existingUser.Nickname,
+    token: token,
+  });
 };
 
-const logoutUser = async (req, res, next) => {
-  logoutToken();
-};
-
-const getUser = async (req, res, next) => {
+const getUser = async (req, res) => {
   const model = new UserModel();
 
-  try {
-    existingUser = await model.findById(req.user.id);
-    res.status(200).json({
-      ID: existingUser.ID,
-      Nickname: existingUser.Nickname,
-      token: req.user.token,
-    });
-  } catch {
-    const error = new BadRequestError('Error! Something went wrong.');
-    return next(error);
-  }
+  const existingUser = await model.findById(req.user.id);
+  if (!existingUser) throw new BadRequestError('Error! Something went wrong.');
+
+  res.status(200).json({
+    ID: existingUser.ID,
+    Nickname: existingUser.Nickname,
+    token: req.user.token,
+  });
 };
 
 module.exports = {
   loginUser,
   signupUser,
-  logoutUser,
   getUser,
 };

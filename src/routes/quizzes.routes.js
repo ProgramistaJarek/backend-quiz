@@ -4,16 +4,26 @@ var router = express.Router();
 const quizzes = require('../controllers/quizzes.controller');
 const authenticateToken = require('../utils/authenticateToken');
 const checkForToken = require('../utils/checkForToken');
+const tryCatch = require('../utils/tryCatch');
 
 router
-  .get('/', quizzes.getQuizzes)
-  .get('/:id', quizzes.getQuizById)
-  .get('/quiz/:id', checkForToken, quizzes.getQuiz);
+  .get('/', tryCatch(quizzes.getQuizzes))
+  .get('/:id', tryCatch(quizzes.getQuizById))
+  .get('/quiz/:id', checkForToken, tryCatch(quizzes.getQuiz))
+  .get(
+    '/quiz/new/:order/:many',
+    checkForToken,
+    tryCatch(quizzes.getQuizByDate),
+  );
 
-router.post('/create/', authenticateToken, quizzes.createQuiz);
+router.post('/create/', authenticateToken, tryCatch(quizzes.createQuiz));
 
-router.put('/update/:id', authenticateToken, quizzes.updateQuiz);
+router.put('/update/:id', authenticateToken, tryCatch(quizzes.updateQuiz));
 
-router.delete('/delete/:id', authenticateToken, quizzes.deleteQuizById);
+router.delete(
+  '/delete/:id',
+  authenticateToken,
+  tryCatch(quizzes.deleteQuizById),
+);
 
 module.exports = router;

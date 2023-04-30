@@ -2,138 +2,88 @@ const QuizTypesModel = require('../models/quiz-types.model');
 
 const BadRequestError = require('../errors/bad-request');
 
-const getQuizTypes = async (req, res, next) => {
+const getQuizTypes = async (req, res) => {
   const model = new QuizTypesModel();
 
-  try {
-    const quizTypes = await model.findAll();
-    res.json(quizTypes);
-  } catch (error) {
-    if (error?.message) {
-      const err = new BadRequestError(error.message);
-      return next(err);
-    } else {
-      console.error(error);
-      res.status(500).send('Internal server error');
-    }
-  }
+  const quizTypes = await model.findAll();
+  if (!quizTypes) throw new BadRequestError('Error! Something went wrong.');
+  res.json(quizTypes);
 };
 
-const getQuizTypeById = async (req, res, next) => {
+const getQuizTypeById = async (req, res) => {
   const model = new QuizTypesModel();
   const quizTypeId = req.params.id;
 
   if (isNaN(quizTypeId)) {
-    const err = new BadRequestError('Error! You need to provide valid id.');
-    return next(err);
+    throw new BadRequestError('Error! You need to provide valid id.');
   }
 
-  try {
-    const quizType = await model.findById(quizTypeId);
-    res.json({ ...quizType });
-  } catch (error) {
-    if (error?.message) {
-      const err = new BadRequestError(error.message);
-      return next(err);
-    } else {
-      console.error(error);
-      res.status(500).send('Internal server error');
-    }
-  }
+  const quizType = await model.findById(quizTypeId);
+  if (!quizType) throw new BadRequestError('Error! Something went wrong.');
+  res.json({ ...quizType });
 };
 
-const createQuizType = async (req, res, next) => {
+const createQuizType = async (req, res) => {
   const model = new QuizTypesModel();
 
   if (!req.body.Type || Object.keys(req.body).length !== 1) {
-    const err = new BadRequestError('Error! You need to provide Type.');
-    return next(err);
+    throw new BadRequestError('Error! You need to provide Type.');
   }
 
-  try {
-    const response = await model.findAll();
-    response.forEach((e) => {
-      if (
-        e.Type.replace(/\s+/g, '').toLowerCase() ===
-        req.body.Type.replace(/\s+/g, '').toLowerCase()
-      )
-        throw new Error('Type actully exist');
-    });
-    await model.create({ Type: req.body.Type.replace(/\s+/g, ' ') });
-    res.status(201).json({ message: `Quiz type has been created` });
-  } catch (error) {
-    if (error?.message) {
-      const err = new BadRequestError(error.message);
-      return next(err);
-    } else {
-      console.error(error);
-      res.status(500).send('Internal server error');
-    }
-  }
+  const response = await model.findAll();
+  if (!response) throw new BadRequestError('Error! Something went wrong.');
+  response.forEach((e) => {
+    if (
+      e.Type.replace(/\s+/g, '').toLowerCase() ===
+      req.body.Type.replace(/\s+/g, '').toLowerCase()
+    )
+      throw new BadRequestError('Type actully exist');
+  });
+
+  await model.create({ Type: req.body.Type.replace(/\s+/g, ' ') });
+  res.status(201).json({ message: `Quiz type has been created` });
 };
 
-const updateQuizType = async (req, res, next) => {
+const updateQuizType = async (req, res) => {
   const model = new QuizTypesModel();
   const quizTypeId = req.params.id;
   const quizTypeBody = req.body;
 
   if (isNaN(quizTypeId)) {
-    const err = new BadRequestError('Error! You need to provide valid id.');
-    return next(err);
+    throw new BadRequestError('Error! You need to provide valid id.');
   }
 
   if (!quizTypeBody.Type || Object.keys(req.body).length !== 1) {
-    const err = new BadRequestError('Error! You need to provide Type.');
-    return next(err);
+    throw new BadRequestError('Error! You need to provide Type.');
   }
 
-  try {
-    await model.findById(quizTypeId);
-    const response = await model.findAll();
-    response.forEach((e) => {
-      if (
-        e.Type.replace(/\s+/g, '').toLowerCase() ===
-        req.body.Type.replace(/\s+/g, '').toLowerCase()
-      )
-        throw new Error('Type actully exist');
-    });
-    await model.update(quizTypeId, quizTypeBody);
-    res.status(201).json({ message: `Quiz type has been updated` });
-  } catch (error) {
-    if (error?.message) {
-      const err = new BadRequestError(error.message);
-      return next(err);
-    } else {
-      console.error(error);
-      res.status(500).send('Internal server error');
-    }
-  }
+  await model.findById(quizTypeId);
+  const response = await model.findAll();
+  if (!response) throw new BadRequestError('Error! Something went wrong.');
+  response.forEach((e) => {
+    if (
+      e.Type.replace(/\s+/g, '').toLowerCase() ===
+      req.body.Type.replace(/\s+/g, '').toLowerCase()
+    )
+      throw new BadRequestError('Type actully exist');
+  });
+  await model.update(quizTypeId, quizTypeBody);
+  res.status(201).json({ message: `Quiz type has been updated` });
 };
 
-const deleteQuizTypeById = async (req, res, next) => {
+const deleteQuizTypeById = async (req, res) => {
   const model = new QuizTypesModel();
   const quizTypeId = req.params.id;
 
   if (isNaN(quizTypeId)) {
-    const err = new BadRequestError('Error! You need to provide valid id.');
-    return next(err);
+    throw new BadRequestError('Error! You need to provide valid id.');
   }
 
-  try {
-    await model.findById(quizTypeId);
-    await model.delete(quizTypeId);
-    res
-      .status(200)
-      .json({ message: `Quiz type with ID ${quizTypeId} has been deleted` });
-  } catch (error) {
-    if (error?.message) {
-      const err = new BadRequestError(error.message);
-      return next(err);
-    } else {
-      console.error(error);
-      res.status(500).send('Internal server error');
-    }
-  }
+  await model.findById(quizTypeId);
+  await model.delete(quizTypeId);
+  res
+    .status(200)
+    .json({ message: `Quiz type with ID ${quizTypeId} has been deleted` });
 };
 
 module.exports = {

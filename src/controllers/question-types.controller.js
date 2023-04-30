@@ -2,138 +2,91 @@ const QuestionTypesModel = require('../models/question-types.model');
 
 const BadRequestError = require('../errors/bad-request');
 
-const getQuestionTypes = async (req, res, next) => {
+const getQuestionTypes = async (req, res) => {
   const model = new QuestionTypesModel();
 
-  try {
-    const questionTypes = await model.findAll();
-    res.json(questionTypes);
-  } catch (error) {
-    if (error?.message) {
-      const err = new BadRequestError(error.message);
-      return next(err);
-    } else {
-      console.error(error);
-      res.status(500).send('Internal server error');
-    }
-  }
+  const questionTypes = await model.findAll();
+  if (!questionTypes) throw new BadRequestError('Error! Something went wrong.');
+  res.json(questionTypes);
 };
 
-const getQuestionTypeById = async (req, res, next) => {
+const getQuestionTypeById = async (req, res) => {
   const model = new QuestionTypesModel();
   const questionTypeId = req.params.id;
 
   if (isNaN(questionTypeId)) {
-    const err = new BadRequestError('Error! You need to provide valid id.');
-    return next(err);
+    throw new BadRequestError('Error! You need to provide valid id.');
   }
 
-  try {
-    const questionType = await model.findById(questionTypeId);
-    res.json({ ...questionType });
-  } catch (error) {
-    if (error?.message) {
-      const err = new BadRequestError(error.message);
-      return next(err);
-    } else {
-      console.error(error);
-      res.status(500).send('Internal server error');
-    }
-  }
+  const questionType = await model.findById(questionTypeId);
+  if (!questionType) throw new BadRequestError('Error! Something went wrong.');
+  res.json({ ...questionType });
 };
 
-const createQuestionType = async (req, res, next) => {
+const createQuestionType = async (req, res) => {
   const model = new QuestionTypesModel();
 
   if (!req.body.Type || Object.keys(req.body).length !== 1) {
-    const err = new BadRequestError('Error! You need to provide Type.');
-    return next(err);
+    throw new BadRequestError('Error! You need to provide Type.');
   }
 
-  try {
-    const response = await model.findAll();
-    response.forEach((e) => {
-      if (
-        e.Type.replace(/\s+/g, '').toLowerCase() ===
-        req.body.Type.replace(/\s+/g, '').toLowerCase()
-      )
-        throw new Error('Type actully exist');
-    });
-    await model.create({ Type: req.body.Type.replace(/\s+/g, ' ') });
-    res.status(201).json({ message: `Question type has been created` });
-  } catch (error) {
-    if (error?.message) {
-      const err = new BadRequestError(error.message);
-      return next(err);
-    } else {
-      console.error(error);
-      res.status(500).send('Internal server error');
-    }
-  }
+  const response = await model.findAll();
+  if (!response) throw new BadRequestError('Error! Something went wrong.');
+
+  response.forEach((e) => {
+    if (
+      e.Type.replace(/\s+/g, '').toLowerCase() ===
+      req.body.Type.replace(/\s+/g, '').toLowerCase()
+    )
+      throw new BadRequestError('Type actully exist');
+  });
+
+  await model.create({ Type: req.body.Type.replace(/\s+/g, ' ') });
+  res.status(201).json({ message: `Question type has been created` });
 };
 
-const updateQuestionType = async (req, res, next) => {
+const updateQuestionType = async (req, res) => {
   const model = new QuestionTypesModel();
   const questionTypeId = req.params.id;
   const questionTypeBody = req.body;
 
   if (isNaN(questionTypeId)) {
-    const err = new BadRequestError('Error! You need to provide valid id.');
-    return next(err);
+    throw new BadRequestError('Error! You need to provide valid id.');
   }
 
   if (!questionTypeBody.Type) {
-    const err = new BadRequestError('Error! You need to provide Type.');
-    return next(err);
+    throw new BadRequestError('Error! You need to provide Type.');
   }
 
-  try {
-    await model.findById(questionTypeId);
-    const response = await model.findAll();
-    response.forEach((e) => {
-      if (
-        e.Type.replace(/\s+/g, '').toLowerCase() ===
-        req.body.Type.replace(/\s+/g, '').toLowerCase()
-      )
-        throw new Error('Type actully exist');
-    });
-    await model.update(questionTypeId, questionTypeBody);
-    res.status(201).json({ message: `Question typw has been updated` });
-  } catch (error) {
-    if (error?.message) {
-      const err = new BadRequestError(error.message);
-      return next(err);
-    } else {
-      console.error(error);
-      res.status(500).send('Internal server error');
-    }
-  }
+  await model.findById(questionTypeId);
+  const response = await model.findAll();
+  if (!response) throw new BadRequestError('Error! Something went wrong.');
+
+  response.forEach((e) => {
+    if (
+      e.Type.replace(/\s+/g, '').toLowerCase() ===
+      req.body.Type.replace(/\s+/g, '').toLowerCase()
+    )
+      throw new BadRequestError('Type actully exist');
+  });
+
+  await model.update(questionTypeId, questionTypeBody);
+  res.status(201).json({ message: `Question type has been updated` });
 };
 
-const deleteQuestionTypeById = async (req, res, next) => {
+const deleteQuestionTypeById = async (req, res) => {
   const model = new QuestionTypesModel();
   const questionTypeId = req.params.id;
 
   if (isNaN(questionTypeId)) {
-    const err = new BadRequestError('Error! You need to provide valid id.');
-    return next(err);
+    throw new BadRequestError('Error! You need to provide valid id.');
   }
 
-  try {
-    await model.findById(questionTypeId);
-    await model.delete(questionTypeId);
-    res.status(200).json({
-      message: `Question type with ID ${questionTypeId} has been deleted`,
-    });
-  } catch (error) {
-    if (error?.message) {
-      const err = new BadRequestError(error.message);
-      return next(err);
-    } else {
-      console.error(error);
-      res.status(500).send('Internal server error');
-    }
-  }
+  await model.findById(questionTypeId);
+  await model.delete(questionTypeId);
+  res.status(200).json({
+    message: `Question type with ID ${questionTypeId} has been deleted`,
+  });
 };
 
 module.exports = {
