@@ -29,7 +29,7 @@ const signupUser = async (req, res) => {
   const { username, password } = req.body;
 
   let passwordHash;
-  await bcrypt.hash(password, 10).then(function (hash) {
+  await bcrypt.hash(password, 10).then((hash) => {
     passwordHash = hash;
   });
 
@@ -62,8 +62,47 @@ const getUser = async (req, res) => {
   });
 };
 
+const changeLogin = async (req, res) => {
+  const model = new UserModel();
+  const { oldUsername, newUsername } = req.body;
+
+  if (oldUsername === newUsername)
+    throw new BadRequestError('Username cannot be the same.');
+
+  const user = await model.findByUsername(oldUsername);
+  if (!user) throw new BadRequestError('User does not exist.');
+  if (user.ID !== req.user.id)
+    throw new BadRequestError('Error! Something went wrong.');
+
+  user.Nickname = newUsername;
+  await model.update(user.ID, user);
+  res.json({ message: 'Username updated successfully' });
+};
+
+const changePassword = async (req, res) => {
+  const model = new UserModel();
+  const { username, oldPassword, newPassword } = req.body;
+
+  if (oldPassword === newPassword)
+    throw new BadRequestError('Password cannot be the same.');
+
+  const user = await model.findByUsername(username);
+  if (!user) throw new BadRequestError('User does not exist.');
+  if (user.ID !== req.user.id)
+    throw new BadRequestError('Error! Something went wrong.');
+
+  const isMatch = await bcrypt.compare(oldPassword, user.Password);
+  if (!isMatch) throw new BadRequestError('Old password is incorrect.');
+
+  user.Password = await bcrypt.hash(newPassword, 10);
+  await model.update(user.ID, user);
+  res.json({ message: 'Password updated successfully' });
+};
+
 module.exports = {
   loginUser,
   signupUser,
   getUser,
+  changeLogin,
+  changePassword,
 };
