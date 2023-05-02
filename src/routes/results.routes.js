@@ -2,14 +2,14 @@ var express = require('express');
 var router = express.Router();
 
 const results = require('../controllers/results.controller');
+const authenticateToken = require('../utils/authenticateToken');
+const tryCatch = require('../utils/tryCatch');
 
-router.get('/', results.getResults);
-router.get('/:id', results.getResultById);
+router
+  .get('/', tryCatch(results.getResults))
+  .get('/most/:most', tryCatch(results.getResultsMost))
+  .get('/user', authenticateToken, tryCatch(results.getResultsByUserId));
 
-router.post('/create', results.createResult);
-
-router.put('/update/:id', results.updateResult);
-
-router.delete('/delete/:id', results.deleteResultById);
+router.post('/create', tryCatch(results.createResult));
 
 module.exports = router;

@@ -3,18 +3,19 @@ var router = express.Router();
 
 const questionTypes = require('../controllers/question-types.controller');
 const authenticateToken = require('../utils/authenticateToken');
+const tryCatch = require('../utils/tryCatch');
 
-router.get('/', questionTypes.getQuestionTypes);
-router.get('/:id', questionTypes.getQuestionTypeById);
+router.get('/', tryCatch(questionTypes.getQuestionTypes));
 
-router.post('/create', authenticateToken, questionTypes.createQuestionType);
-
-router.put('/update/:id', authenticateToken, questionTypes.updateQuestionType);
-
+router.post(
+  '/create',
+  authenticateToken,
+  tryCatch(questionTypes.createQuestionType),
+);
 router.delete(
   '/delete/:id',
   authenticateToken,
-  questionTypes.deleteQuestionTypeById,
+  tryCatch(questionTypes.deleteQuestionTypeById),
 );
 
 module.exports = router;

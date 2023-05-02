@@ -1,9 +1,22 @@
-const Model = require('./main.model');
-
-class QuestionTypes extends Model {
-  constructor() {
-    super('QuestionTypes');
-  }
-}
+const QuestionTypes = (sequelize, Sequelize) => {
+  return sequelize.define(
+    'QuestionTypes',
+    {
+      ID: {
+        type: Sequelize.INTEGER,
+        allowNull: false,
+        primaryKey: true,
+        autoIncrement: true,
+      },
+      Type: {
+        type: Sequelize.STRING(32),
+        allowNull: false,
+      },
+    },
+    {
+      tableName: 'QuestionTypes',
+    },
+  );
+};
 
 module.exports = QuestionTypes;

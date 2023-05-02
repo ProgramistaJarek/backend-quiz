@@ -1,228 +1,223 @@
-const QuizzesModel = require('../models/quizzes.model');
-const QuestionsModel = require('../models/questions.model');
-const AnswersModel = require('../models/answers.model');
+const { Op, Sequelize } = require('sequelize');
+const db = require('../models');
+const QuizzesModel = db.quizzes;
+const QuizTypesModel = db.quizTypes;
+const AnswersModel = db.answers;
+const QuestionsModel = db.questions;
+const QuestionTypesModel = db.questionTypes;
 
-const BadRequestError = require('../errors/bad-request');
+const error = require('../errors');
+const helpers = require('../utils/helpers');
 
 const getQuizzes = async (req, res) => {
-  const model = new QuizzesModel();
-
-  try {
-    const quizzes = await model.findAll();
-    res.json({ quizzes });
-  } catch (error) {
-    console.error(error);
-    res.status(500).send('Internal server error');
-  }
+  const quizzes = await QuizzesModel.findAll({
+    attributes: [
+      'ID',
+      'Name',
+      'CreatedAt',
+      [Sequelize.col('QuizType.Type'), 'Type'],
+    ],
+    include: [{ model: QuizTypesModel, attributes: [] }],
+  });
+  res.json(quizzes);
 };
 
-const getQuizById = async (req, res, next) => {
-  const model = new QuizzesModel();
+const getQuizByDate = async (req, res) => {
+  const quizOrder = req.params.order;
+  const quizNumber = req.params.many;
+
+  if (quizOrder !== 'asc' && quizOrder !== 'desc') {
+    throw new error.BadRequestError('Error! You need to provide asc/desc.');
+  }
+
+  helpers.checkIfNumber(quizNumber);
+
+  const quizzes = await QuizzesModel.findAll({
+    attributes: [
+      'ID',
+      'Name',
+      'CreatedAt',
+      [Sequelize.col('QuizType.Type'), 'Type'],
+    ],
+    include: [
+      {
+        model: QuizTypesModel,
+        attributes: [],
+      },
+    ],
+    order: [['CreatedAt', quizOrder]],
+    limit: +quizNumber,
+  });
+
+  res.json(quizzes);
+};
+
+const getQuiz = async (req, res) => {
   const quizId = req.params.id;
+  helpers.checkIfNumber(quizId);
 
-  if (isNaN(quizId)) {
-    const err = new BadRequestError('Error! You need to provide valid id.');
-    return next(err);
-  }
+  let quiz = await QuizzesModel.findOne({
+    attributes: [
+      'ID',
+      'AuthorID',
+      'Name',
+      'CreatedAt',
+      [Sequelize.col('QuizType.Type'), 'Type'],
+    ],
+    include: [{ model: QuizTypesModel, attributes: [] }],
+    where: { ID: { [Op.eq]: quizId } },
+  });
+  if (!quiz) throw new error.BadRequestError('Quiz do not exist.');
 
-  try {
-    const quizzes = await model.findById(quizId);
-    res.json({ quizzes });
-  } catch (error) {
-    if (error?.message) {
-      const err = new BadRequestError(error.message);
-      return next(err);
-    } else {
-      console.error(error);
-      res.status(500).send('Internal server error');
-    }
-  }
-};
+  const questionsByQuizId = await QuestionsModel.findAll({
+    attributes: [
+      'ID',
+      'Question',
+      'Path',
+      [Sequelize.col('QuestionType.Type'), 'Type'],
+    ],
+    include: [
+      {
+        model: QuestionTypesModel,
+        attributes: [],
+      },
+    ],
+    where: { QuizID: { [Op.eq]: quizId } },
+  });
 
-const createQuiz = async (req, res, next) => {
-  const model = new QuizzesModel();
-  const questionsModel = new QuestionsModel();
-  const answersModel = new AnswersModel();
-
-  try {
-    let minNumberOfAnswers = 0;
-    let countCorrectNumberOfAnswers = 0;
-
-    req.body.questions.map((data) => {
-      if (data.answers.length <= 1) throw new Error();
-      countCorrectNumberOfAnswers = 0;
-      minNumberOfAnswers = data.question.Type === 'checkbox' ? 2 : 1;
-
-      data.answers.map((answer) => {
-        if (answer.IsCorrect >= 1) countCorrectNumberOfAnswers++;
-      });
-
-      if (!(countCorrectNumberOfAnswers >= minNumberOfAnswers))
-        throw new Error();
+  const questions = [];
+  for (const question of questionsByQuizId) {
+    const questionId = question.ID;
+    const answersForQuestion = await AnswersModel.findAll({
+      attributes: ['ID', 'Answer', 'IsCorrect', 'Path'],
+      where: { QuestionID: { [Op.eq]: questionId } },
     });
-  } catch (err) {
-    const error = new BadRequestError('Error! Something went wrong.');
-    return next(error);
+    questions.push({ question, answers: answersForQuestion });
   }
 
-  let quiz;
-  try {
-    quiz = await model.create({
-      ...req.body.quiz,
-      AuthorID: req.user.id,
+  quiz = {
+    ...quiz.dataValues,
+    isEditable: quiz.AuthorID === req.user.id,
+  };
+  res.json({ quiz, questions });
+};
+
+const createQuiz = async (req, res) => {
+  const body = req.body;
+  if (!helpers.checkIfBodyOfQuizIsCorrect(body))
+    throw new error.BadRequestError('Invalid request body');
+
+  helpers.checkQuestions(body.questions);
+
+  const quiz = await QuizzesModel.create({
+    ...body.quiz,
+    AuthorID: req.user.id,
+  });
+
+  for (const data of body.questions) {
+    const questionType = await QuestionTypesModel.findOne({
+      attributes: ['ID'],
+      where: { Type: { [Op.eq]: data.question.Type } },
     });
-  } catch (error) {
-    if (error?.message) {
-      const err = new BadRequestError(error.message);
-      return next(err);
-    } else {
-      console.error(error);
-      res.status(500).send('Internal server error');
-    }
-  }
+    if (!questionType)
+      throw new error.BadRequestError('Error! Something went wrong.');
 
-  try {
-    let question;
-    let questionType;
-    req.body.questions.map(async (data) => {
-      if (data.question.Type === 'checkbox') questionType = 1;
-      else if (data.question.Type === 'radio') questionType = 2;
-      else if (data.question.Type === 'boolean') questionType = 3;
-      delete data.question['Type'];
-      question = await questionsModel.create({
-        ...data.question,
-        QuizID: quiz.ID,
-        TypeID: questionType,
-      });
-
-      data.answers.map(async (answer) => {
-        answersModel.create({ ...answer, QuestionID: question.ID });
-      });
+    const question = await QuestionsModel.create({
+      ...data.question,
+      QuizID: quiz.ID,
+      TypeID: questionType.ID,
     });
-    res.status(201).json({ message: `Quiz has been created` });
-  } catch (error) {
-    if (error?.message) {
-      const err = new BadRequestError(error.message);
-      return next(err);
-    } else {
-      console.error(error);
-      res.status(500).send('Internal server error');
+    if (!question)
+      throw new error.BadRequestError('Error! Something went wrong.');
+
+    for (const answer of data.answers) {
+      const created = await AnswersModel.create({
+        ...answer,
+        QuestionID: question.ID,
+      });
+      if (!created)
+        throw new error.BadRequestError('Error! Something went wrong.');
     }
   }
+
+  res.status(201).json({ message: `Quiz has been created` });
 };
 
-const updateQuiz = async (req, res, next) => {
-  const model = new QuizzesModel();
+const updateQuiz = async (req, res) => {
   const quizId = req.params.id;
-  const quizReq = req.body;
+  const body = req.body;
 
-  if (isNaN(quizId)) {
-    const err = new BadRequestError('Error! You need to provide valid id.');
-    return next(err);
-  }
+  helpers.checkIfNumber(quizId);
 
-  try {
-    const quiz = await model.findById(quizId);
+  if (!helpers.checkIfBodyOfQuizIsCorrect(body))
+    throw new error.BadRequestError('Invalid request body');
 
-    await model.update(quizId, { ...quiz[0], ...quizReq });
-    res.status(201).json({ message: `Quiz has been updated` });
-  } catch (error) {
-    if (error?.message) {
-      res.status(404).json({ error: error.message });
-    } else {
-      console.error(error);
-      res.status(500).send('Internal server error');
-    }
-  }
-};
+  helpers.checkQuestions(body.questions);
 
-const deleteQuizById = async (req, res, next) => {
-  const model = new QuizzesModel();
-  const quizId = req.params.id;
+  const quiz = await QuizzesModel.findOne({
+    where: { ID: { [Op.eq]: quizId } },
+  });
+  if (!quiz) throw new error.BadRequestError('Quiz do not exists.');
 
-  if (isNaN(quizId)) {
-    const err = new BadRequestError('Error! You need to provide valid id.');
-    return next(err);
-  }
-
-  let quiz;
-  try {
-    quiz = await model.findById(quizId);
-
-    if (quiz.AuthorID !== req.user.id)
-      throw new Error('You cannot delete this quiz');
-  } catch (error) {
-    if (error?.message) {
-      const err = new BadRequestError(error.message);
-      return next(err);
-    } else {
-      console.error(error);
-      res.status(500).send('Internal server error');
-    }
-  }
-
-  try {
-    await model.delete(quizId);
-    res
-      .status(200)
-      .json({ message: `Quiz with ID ${quizId} has been deleted` });
-  } catch (error) {
-    if (error?.message) {
-      const err = new BadRequestError(error.message);
-      return next(err);
-    } else {
-      console.error(error);
-      res.status(500).send('Internal server error');
-    }
-  }
-};
-
-const getQuiz = async (req, res, next) => {
-  const model = new QuizzesModel();
-  const questionsModel = new QuestionsModel();
-  const answersModel = new AnswersModel();
-  const quizId = req.params.id;
-
-  if (isNaN(quizId)) {
-    const err = new BadRequestError('Error! You need to provide valid id.');
-    return next(err);
-  }
-
-  try {
-    let quiz = await model.findById(quizId);
-    const questionsByQuizId = await questionsModel.getQuestionsWithTypeByQuizId(
-      quizId,
+  if (req.user.id !== quiz.AuthorID)
+    throw new error.BadRequestError(
+      'You are not authorized to update this quiz.',
     );
-    const questions = [];
-    for (const question of questionsByQuizId) {
-      const questionId = question.ID;
-      const answersForQuestion = await answersModel.getAnswersForQuestion(
-        questionId,
-      );
-      questions.push({ question, answers: answersForQuestion });
-    }
 
-    quiz = {
-      ...quiz,
-      isEditable: quiz.AuthorID === req.user.id,
-    };
-    res.json({ quiz, questions });
-  } catch (error) {
-    if (error?.message) {
-      const err = new BadRequestError(error.message);
-      return next(err);
-    } else {
-      console.error(error);
-      res.status(500).send('Internal server error');
+  await QuestionsModel.destroy({ where: { QuizID: { [Op.eq]: quizId } } });
+
+  for (const data of body.questions) {
+    const questionType = await QuestionTypesModel.findOne({
+      attributes: ['ID'],
+      where: { Type: { [Op.eq]: data.question.Type } },
+    });
+    if (!questionType)
+      throw new error.BadRequestError('Error! Something went wrong.');
+
+    const question = await QuestionsModel.create({
+      ...data.question,
+      QuizID: quiz.ID,
+      TypeID: questionType.ID,
+    });
+    if (!question)
+      throw new error.BadRequestError('Error! Something went wrong.');
+
+    for (const answer of data.answers) {
+      const created = await AnswersModel.create({
+        ...answer,
+        QuestionID: question.ID,
+      });
+      if (!created)
+        throw new error.BadRequestError('Error! Something went wrong.');
     }
   }
+
+  await quiz.update({ ...body.quiz });
+
+  res.status(201).json({ message: `Quiz has been updated` });
+};
+
+const deleteQuizById = async (req, res) => {
+  const quizId = req.params.id;
+  helpers.checkIfNumber(quizId);
+
+  const quiz = await QuizzesModel.findOne({
+    where: { ID: { [Op.eq]: quizId } },
+  });
+  if (!quiz) throw new error.BadRequestError('Quiz do not exists.');
+
+  if (quiz.AuthorID !== req.user.id)
+    throw new error.BadRequestError('You cannot delete this quiz');
+
+  await QuizzesModel.destroy({ where: { ID: { [Op.eq]: quizId } } });
+  res.status(200).json({ message: `Quiz with ID ${quizId} has been deleted` });
 };
 
 module.exports = {
   getQuizzes,
-  getQuizById,
   createQuiz,
   updateQuiz,
   deleteQuizById,
   getQuiz,
+  getQuizByDate,
 };

@@ -1,94 +1,117 @@
-const ResultsModel = require('../models/results.model');
+const { Op, Sequelize } = require('sequelize');
+const db = require('../models');
+const ResultsModel = db.results;
+const Quizzes = db.quizzes;
+const QuizTypes = db.quizTypes;
+
+const error = require('../errors');
+const helpers = require('../utils/helpers');
 
 const getResults = async (req, res) => {
-  const model = new ResultsModel();
+  const ranking = await ResultsModel.findAll({
+    attributes: [
+      'QuizID',
+      [Sequelize.col('Quiz.Name'), 'Name'],
+      [Sequelize.col('Quiz->QuizType.Type'), 'Type'],
+      'PlayerName',
+      'Score',
+      'CreatedAt',
+    ],
+    include: [
+      {
+        model: Quizzes,
+        attributes: [],
+        include: {
+          model: QuizTypes,
+          attributes: [],
+          as: 'QuizType',
+        },
+      },
+    ],
+    where: {
+      Score: {
+        [Op.not]: null,
+      },
+    },
+  });
 
-  try {
-    const results = await model.findAll();
-    res.json({ results });
-  } catch (error) {
-    console.error(error);
-    res.status(500).send('Internal server error');
-  }
-};
-
-const getResultById = async (req, res) => {
-  const model = new ResultsModel();
-  const resultId = req.params.id;
-
-  try {
-    const result = await model.findById(resultId);
-    res.json({ result });
-  } catch (error) {
-    if (error?.message) {
-      res.status(404).json({ error: error.message });
-    } else {
-      console.error(error);
-      res.status(500).send('Internal server error');
-    }
-  }
+  res.json(ranking);
 };
 
 const createResult = async (req, res) => {
-  const model = new ResultsModel();
-
-  try {
-    await model.create(req.body);
-    res.status(201).json({ message: `Result has been created` });
-  } catch (error) {
-    if (error?.message) {
-      res.status(404).json({ error: error.message });
-    } else {
-      console.error(error);
-      res.status(500).send('Internal server error');
-    }
-  }
+  const created = await ResultsModel.create(req.body);
+  if (!created) throw new error.BadRequestError('Error! Something went wrong.');
+  res.status(201).json({ message: `Result has been created` });
 };
 
-const updateResult = async (req, res) => {
-  const model = new ResultsModel();
-  const resultId = req.params.id;
-  const resultBody = req.body;
+const getResultsMost = async (req, res) => {
+  const numberToReturn = req.params.most;
+  helpers.checkIfNumber(numberToReturn);
 
-  try {
-    const result = await model.findById(resultId);
+  const results = await ResultsModel.findAll({
+    attributes: [
+      'QuizID',
+      [Sequelize.fn('COUNT', Sequelize.col('Score')), 'Count'],
+      [Sequelize.col('Quiz.Name'), 'Name'],
+      [Sequelize.col('Quiz.CreatedAt'), 'CreatedAt'],
+      [Sequelize.col('Quiz->QuizType.Type'), 'Type'],
+    ],
+    where: {
+      Score: { [Op.ne]: null },
+    },
+    group: 'QuizID',
+    order: [[Sequelize.fn('COUNT', Sequelize.col('Score')), 'DESC']],
+    limit: +numberToReturn,
+    include: [
+      {
+        model: Quizzes,
+        attributes: [],
+        include: {
+          model: QuizTypes,
+          attributes: [],
+          as: 'QuizType',
+        },
+      },
+    ],
+  });
 
-    await model.update(resultId, { ...result[0], ...resultBody });
-    res.status(201).json({ message: `Result has been updated` });
-  } catch (error) {
-    if (error?.message) {
-      res.status(404).json({ error: error.message });
-    } else {
-      console.error(error);
-      res.status(500).send('Internal server error');
-    }
-  }
+  res.json(results);
 };
 
-const deleteResultById = async (req, res) => {
-  const model = new ResultsModel();
-  const resultId = req.params.id;
+const getResultsByUserId = async (req, res) => {
+  const results = await ResultsModel.findAll({
+    attributes: [
+      'QuizID',
+      'PlayerName',
+      'Score',
+      [Sequelize.col('Quiz.Name'), 'Name'],
+      [Sequelize.col('Quiz->QuizType.Type'), 'Type'],
+      [Sequelize.col('Quiz.CreatedAt'), 'CreatedAt'],
+    ],
+    where: {
+      Score: { [Op.ne]: null },
+      UserId: { [Op.eq]: req.user.id },
+    },
+    group: 'QuizID',
+    include: [
+      {
+        model: Quizzes,
+        attributes: [],
+        include: {
+          model: QuizTypes,
+          attributes: [],
+          as: 'QuizType',
+        },
+      },
+    ],
+  });
 
-  try {
-    await model.findById(resultId);
-    await model.delete(resultId);
-    res
-      .status(200)
-      .json({ message: `Result with ID ${resultId} has been deleted` });
-  } catch (error) {
-    if (error?.message) {
-      res.status(404).json({ error: error.message });
-    } else {
-      console.error(error);
-      res.status(500).send('Internal server error');
-    }
-  }
+  res.json(results);
 };
 
 module.exports = {
   getResults,
-  getResultById,
   createResult,
-  updateResult,
-  deleteResultById,
+  getResultsMost,
+  getResultsByUserId,
 };

@@ -3,14 +3,23 @@ var router = express.Router();
 
 const quizTypes = require('../controllers/quiz-types.controller');
 const authenticateToken = require('../utils/authenticateToken');
+const tryCatch = require('../utils/tryCatch');
 
-router.get('/', quizTypes.getQuizTypes);
-router.get('/:id', quizTypes.getQuizTypeById);
+router.get('/', tryCatch(quizTypes.getQuizTypes));
+router.get('/:id', tryCatch(quizTypes.getQuizTypeById));
 
-router.post('/create', authenticateToken, quizTypes.createQuizType);
+router.post('/create', authenticateToken, tryCatch(quizTypes.createQuizType));
 
-router.put('/update/:id', authenticateToken, quizTypes.updateQuizType);
+router.put(
+  '/update/:id',
+  authenticateToken,
+  tryCatch(quizTypes.updateQuizType),
+);
 
-router.delete('/delete/:id', authenticateToken, quizTypes.deleteQuizTypeById);
+router.delete(
+  '/delete/:id',
+  authenticateToken,
+  tryCatch(quizTypes.deleteQuizTypeById),
+);
 
 module.exports = router;
