@@ -1,24 +1,39 @@
-const db = require('../configs/db');
-const Model = require('./main.model');
-
-class Answers extends Model {
-  constructor() {
-    super('Answers');
-  }
-
-  getAnswersForQuestion(id) {
-    return new Promise((resolve, reject) => {
-      db.query(
-        'SELECT ID, Answer, IsCorrect, Path FROM ?? WHERE QuestionID = ?;',
-        [this.table, id],
-        (error, result) => {
-          if (error) reject(error);
-
-          resolve(result);
+const Answers = (sequelize, Sequelize) => {
+  return sequelize.define(
+    'Answers',
+    {
+      ID: {
+        type: Sequelize.INTEGER,
+        allowNull: false,
+        primaryKey: true,
+        autoIncrement: true,
+      },
+      QuestionID: {
+        type: Sequelize.INTEGER,
+        allowNull: false,
+        references: {
+          model: 'Questions',
+          key: 'ID',
         },
-      );
-    });
-  }
-}
+      },
+      Answer: {
+        type: Sequelize.STRING(255),
+        allowNull: false,
+      },
+      IsCorrect: {
+        type: Sequelize.BOOLEAN,
+        allowNull: false,
+      },
+      Path: {
+        type: Sequelize.STRING(255),
+        allowNull: true,
+      },
+    },
+    {
+      tableName: 'Answers',
+      timestamps: false,
+    },
+  );
+};
 
 module.exports = Answers;

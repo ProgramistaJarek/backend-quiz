@@ -7,10 +7,9 @@ const tryCatch = require('../utils/tryCatch');
 
 router
   .get('/', tryCatch(results.getResults))
-  .get('/most/:most', tryCatch(results.getResultsMost));
+  .get('/most/:most', tryCatch(results.getResultsMost))
+  .get('/user', authenticateToken, tryCatch(results.getResultsByUserId));
 
 router.post('/create', tryCatch(results.createResult));
-
-router.delete('/delete/:id', tryCatch(results.deleteResultById));
 
 module.exports = router;

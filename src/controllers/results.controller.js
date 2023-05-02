@@ -1,51 +1,117 @@
-const ResultsModel = require('../models/results.model');
+const { Op, Sequelize } = require('sequelize');
+const db = require('../models');
+const ResultsModel = db.results;
+const Quizzes = db.quizzes;
+const QuizTypes = db.quizTypes;
 
-const BadRequestError = require('../errors/bad-request');
+const error = require('../errors');
+const helpers = require('../utils/helpers');
 
 const getResults = async (req, res) => {
-  const model = new ResultsModel();
+  const ranking = await ResultsModel.findAll({
+    attributes: [
+      'QuizID',
+      [Sequelize.col('Quiz.Name'), 'Name'],
+      [Sequelize.col('Quiz->QuizType.Type'), 'Type'],
+      'PlayerName',
+      'Score',
+      'CreatedAt',
+    ],
+    include: [
+      {
+        model: Quizzes,
+        attributes: [],
+        include: {
+          model: QuizTypes,
+          attributes: [],
+          as: 'QuizType',
+        },
+      },
+    ],
+    where: {
+      Score: {
+        [Op.not]: null,
+      },
+    },
+  });
 
-  const ranking = await model.getRanking();
   res.json(ranking);
 };
 
 const createResult = async (req, res) => {
-  const model = new ResultsModel();
-
-  await model.create(req.body);
+  const created = await ResultsModel.create(req.body);
+  if (!created) throw new error.BadRequestError('Error! Something went wrong.');
   res.status(201).json({ message: `Result has been created` });
 };
 
-const deleteResultById = async (req, res) => {
-  const model = new ResultsModel();
-  const resultId = req.params.id;
+const getResultsMost = async (req, res) => {
+  const numberToReturn = req.params.most;
+  helpers.checkIfNumber(numberToReturn);
 
-  if (isNaN(resultId)) {
-    throw new BadRequestError('Error! You need to provide valid id.');
-  }
+  const results = await ResultsModel.findAll({
+    attributes: [
+      'QuizID',
+      [Sequelize.fn('COUNT', Sequelize.col('Score')), 'Count'],
+      [Sequelize.col('Quiz.Name'), 'Name'],
+      [Sequelize.col('Quiz.CreatedAt'), 'CreatedAt'],
+      [Sequelize.col('Quiz->QuizType.Type'), 'Type'],
+    ],
+    where: {
+      Score: { [Op.ne]: null },
+    },
+    group: 'QuizID',
+    order: [[Sequelize.fn('COUNT', Sequelize.col('Score')), 'DESC']],
+    limit: +numberToReturn,
+    include: [
+      {
+        model: Quizzes,
+        attributes: [],
+        include: {
+          model: QuizTypes,
+          attributes: [],
+          as: 'QuizType',
+        },
+      },
+    ],
+  });
 
-  await model.findById(resultId);
-  await model.delete(resultId);
-  res
-    .status(200)
-    .json({ message: `Result with ID ${resultId} has been deleted` });
+  res.json(results);
 };
 
-const getResultsMost = async (req, res) => {
-  const model = new ResultsModel();
-  const numberToReturn = req.params.most;
+const getResultsByUserId = async (req, res) => {
+  const results = await ResultsModel.findAll({
+    attributes: [
+      'QuizID',
+      'PlayerName',
+      'Score',
+      [Sequelize.col('Quiz.Name'), 'Name'],
+      [Sequelize.col('Quiz->QuizType.Type'), 'Type'],
+      [Sequelize.col('Quiz.CreatedAt'), 'CreatedAt'],
+    ],
+    where: {
+      Score: { [Op.ne]: null },
+      UserId: { [Op.eq]: req.user.id },
+    },
+    group: 'QuizID',
+    include: [
+      {
+        model: Quizzes,
+        attributes: [],
+        include: {
+          model: QuizTypes,
+          attributes: [],
+          as: 'QuizType',
+        },
+      },
+    ],
+  });
 
-  if (isNaN(numberToReturn)) {
-    throw new BadRequestError('Error! You need to provide valid id.');
-  }
-
-  const results = await model.getSolvedQuizzess(numberToReturn);
   res.json(results);
 };
 
 module.exports = {
   getResults,
   createResult,
-  deleteResultById,
   getResultsMost,
+  getResultsByUserId,
 };

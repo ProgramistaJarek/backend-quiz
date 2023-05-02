@@ -1,86 +1,94 @@
-const QuizTypesModel = require('../models/quiz-types.model');
+const { Op } = require('sequelize');
+const db = require('../models');
+const QuizTypesModel = db.quizTypes;
 
-const BadRequestError = require('../errors/bad-request');
+const error = require('../errors');
+const helpers = require('../utils/helpers');
 
 const getQuizTypes = async (req, res) => {
-  const model = new QuizTypesModel();
+  const quizTypes = await QuizTypesModel.findAll({
+    attributes: ['ID', 'Type'],
+  });
+  if (!quizTypes.length)
+    throw new error.BadRequestError('Error! Something went wrong.');
 
-  const quizTypes = await model.findAll();
-  if (!quizTypes) throw new BadRequestError('Error! Something went wrong.');
   res.json(quizTypes);
 };
 
 const getQuizTypeById = async (req, res) => {
-  const model = new QuizTypesModel();
   const quizTypeId = req.params.id;
+  helpers.checkIfNumber(quizTypeId);
 
-  if (isNaN(quizTypeId)) {
-    throw new BadRequestError('Error! You need to provide valid id.');
-  }
+  const quizType = await QuizTypesModel.findOne({
+    where: { ID: { [Op.eq]: quizTypeId } },
+  });
+  if (!quizType)
+    throw new error.BadRequestError('Error! Something went wrong.');
 
-  const quizType = await model.findById(quizTypeId);
-  if (!quizType) throw new BadRequestError('Error! Something went wrong.');
-  res.json({ ...quizType });
+  res.json(quizType);
 };
 
 const createQuizType = async (req, res) => {
-  const model = new QuizTypesModel();
-
   if (!req.body.Type || Object.keys(req.body).length !== 1) {
-    throw new BadRequestError('Error! You need to provide Type.');
+    throw new error.BadRequestError('Error! You need to provide Type.');
   }
 
-  const response = await model.findAll();
-  if (!response) throw new BadRequestError('Error! Something went wrong.');
+  const response = await QuizTypesModel.findAll();
   response.forEach((e) => {
     if (
       e.Type.replace(/\s+/g, '').toLowerCase() ===
       req.body.Type.replace(/\s+/g, '').toLowerCase()
     )
-      throw new BadRequestError('Type actully exist');
+      throw new error.BadRequestError('Type actully exist');
   });
 
-  await model.create({ Type: req.body.Type.replace(/\s+/g, ' ') });
+  const created = await QuizTypesModel.create({
+    Type: req.body.Type.replace(/\s+/g, ' '),
+  });
+  if (!created) throw new error.BadRequestError('Error! Something went wrong.');
+
   res.status(201).json({ message: `Quiz type has been created` });
 };
 
 const updateQuizType = async (req, res) => {
-  const model = new QuizTypesModel();
   const quizTypeId = req.params.id;
   const quizTypeBody = req.body;
 
-  if (isNaN(quizTypeId)) {
-    throw new BadRequestError('Error! You need to provide valid id.');
-  }
+  helpers.checkIfNumber(quizTypeId);
 
   if (!quizTypeBody.Type || Object.keys(req.body).length !== 1) {
-    throw new BadRequestError('Error! You need to provide Type.');
+    throw new error.BadRequestError('Error! You need to provide Type.');
   }
 
-  await model.findById(quizTypeId);
-  const response = await model.findAll();
-  if (!response) throw new BadRequestError('Error! Something went wrong.');
+  const response = await QuizTypesModel.findAll();
+  if (!response.length)
+    throw new error.BadRequestError('Error! Something went wrong.');
   response.forEach((e) => {
     if (
       e.Type.replace(/\s+/g, '').toLowerCase() ===
       req.body.Type.replace(/\s+/g, '').toLowerCase()
     )
-      throw new BadRequestError('Type actully exist');
+      throw new error.BadRequestError('Type actully exist');
   });
-  await model.update(quizTypeId, quizTypeBody);
+
+  const updated = await QuizTypesModel.update(
+    { Type: quizTypeBody.Type.replace(/\s+/g, ' ') },
+    { where: { ID: { [Op.eq]: quizTypeId } } },
+  );
+  if (!updated[0]) throw new error.BadRequestError('Type do not exists.');
+
   res.status(201).json({ message: `Quiz type has been updated` });
 };
 
 const deleteQuizTypeById = async (req, res) => {
-  const model = new QuizTypesModel();
   const quizTypeId = req.params.id;
+  helpers.checkIfNumber(quizTypeId);
 
-  if (isNaN(quizTypeId)) {
-    throw new BadRequestError('Error! You need to provide valid id.');
-  }
+  const response = await QuizTypesModel.destroy({
+    where: { ID: { [Op.eq]: quizTypeId } },
+  });
+  if (!response) throw new error.BadRequestError('Type do not exist');
 
-  await model.findById(quizTypeId);
-  await model.delete(quizTypeId);
   res
     .status(200)
     .json({ message: `Quiz type with ID ${quizTypeId} has been deleted` });
