@@ -15,6 +15,7 @@ const QuizTypes = (sequelize, Sequelize) => {
     },
     {
       tableName: 'QuizTypes',
+      timestamps: true,
     },
   );
 };

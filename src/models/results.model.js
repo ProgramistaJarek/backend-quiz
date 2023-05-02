@@ -6,19 +6,11 @@ const Results = (sequelize, Sequelize) => {
         type: Sequelize.INTEGER,
         allowNull: false,
         primaryKey: true,
-        references: {
-          model: 'Quizzes',
-          key: 'ID',
-        },
       },
       UserID: {
         type: Sequelize.INTEGER,
         allowNull: false,
         primaryKey: true,
-        references: {
-          model: 'Users',
-          key: 'ID',
-        },
       },
       PlayerName: {
         type: Sequelize.STRING(16),
@@ -31,7 +23,7 @@ const Results = (sequelize, Sequelize) => {
     },
     {
       tableName: 'Results',
-      // timestamps: false,
+      timestamps: true,
     },
   );
 };

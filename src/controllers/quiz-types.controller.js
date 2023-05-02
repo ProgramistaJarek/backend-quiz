@@ -9,8 +9,6 @@ const getQuizTypes = async (req, res) => {
   const quizTypes = await QuizTypesModel.findAll({
     attributes: ['ID', 'Type'],
   });
-  if (!quizTypes.length)
-    throw new error.BadRequestError('Error! Something went wrong.');
 
   res.json(quizTypes);
 };
@@ -20,6 +18,7 @@ const getQuizTypeById = async (req, res) => {
   helpers.checkIfNumber(quizTypeId);
 
   const quizType = await QuizTypesModel.findOne({
+    attributes: ['ID', 'Type'],
     where: { ID: { [Op.eq]: quizTypeId } },
   });
   if (!quizType)

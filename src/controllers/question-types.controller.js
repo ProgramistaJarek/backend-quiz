@@ -9,8 +9,6 @@ const getQuestionTypes = async (req, res) => {
   const questionTypes = await QuestionTypesModel.findAll({
     attributes: ['ID', 'Type'],
   });
-  if (!questionTypes.length)
-    throw new error.BadRequestError('Error! Something went wrong.');
 
   res.json(questionTypes);
 };

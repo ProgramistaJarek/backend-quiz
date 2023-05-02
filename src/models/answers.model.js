@@ -6,15 +6,14 @@ const Answers = (sequelize, Sequelize) => {
         type: Sequelize.INTEGER,
         allowNull: false,
         primaryKey: true,
-        autoIncrement: true,
       },
       QuestionID: {
         type: Sequelize.INTEGER,
         allowNull: false,
-        references: {
-          model: 'Questions',
-          key: 'ID',
-        },
+      },
+      QuizID: {
+        type: Sequelize.INTEGER,
+        allowNull: false,
       },
       Answer: {
         type: Sequelize.STRING(255),

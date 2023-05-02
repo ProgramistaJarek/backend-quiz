@@ -8,6 +8,13 @@ const sequelize = new Sequelize(
   {
     host: config.db.host,
     dialect: 'mysql',
+    timezone: '+02:00',
+    pool: {
+      max: 5,
+      min: 0,
+      acquire: 30000,
+      idle: 10000,
+    },
   },
 );
 
@@ -33,8 +40,19 @@ db.quizzes.belongsTo(db.quizTypes, { foreignKey: 'TypeID' });
 db.user.hasMany(db.quizzes, { foreignKey: 'AuthorID' });
 db.quizzes.belongsTo(db.user, { foreignKey: 'AuthorID' });
 
-db.questions.belongsTo(db.quizzes, { foreignKey: 'QuizID' });
+db.questions.belongsTo(db.quizzes, {
+  foreignKey: 'QuizID',
+  onDelete: 'cascade',
+});
 db.questions.belongsTo(db.questionTypes, { foreignKey: 'TypeID' });
+
+db.answers.belongsTo(db.questions, {
+  foreignKey: 'QuestionID',
+  onDelete: 'cascade',
+});
 db.questions.hasMany(db.answers, { foreignKey: 'QuestionID' });
+
+db.answers.belongsTo(db.quizzes, { foreignKey: 'QuizID', onDelete: 'cascade' });
+db.quizzes.hasMany(db.answers, { foreignKey: 'QuizID' });
 
 module.exports = db;

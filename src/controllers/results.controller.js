@@ -39,7 +39,14 @@ const getResults = async (req, res) => {
 };
 
 const createResult = async (req, res) => {
-  const created = await ResultsModel.create(req.body);
+  console.log({
+    ...req.body,
+    UserID: req.user.id,
+  });
+  const created = await ResultsModel.create({
+    ...req.body,
+    UserID: req.user.id,
+  });
   if (!created) throw new error.BadRequestError('Error! Something went wrong.');
   res.status(201).json({ message: `Result has been created` });
 };

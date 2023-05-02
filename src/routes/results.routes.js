@@ -10,6 +10,6 @@ router
   .get('/most/:most', tryCatch(results.getResultsMost))
   .get('/user', authenticateToken, tryCatch(results.getResultsByUserId));
 
-router.post('/create', tryCatch(results.createResult));
+router.post('/create', authenticateToken, tryCatch(results.createResult));
 
 module.exports = router;

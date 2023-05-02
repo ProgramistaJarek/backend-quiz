@@ -90,7 +90,10 @@ const getQuiz = async (req, res) => {
     const questionId = question.ID;
     const answersForQuestion = await AnswersModel.findAll({
       attributes: ['ID', 'Answer', 'IsCorrect', 'Path'],
-      where: { QuestionID: { [Op.eq]: questionId } },
+      where: {
+        QuestionID: { [Op.eq]: questionId },
+        QuizID: { [Op.eq]: quizId },
+      },
     });
     questions.push({ question, answers: answersForQuestion });
   }
@@ -114,7 +117,7 @@ const createQuiz = async (req, res) => {
     AuthorID: req.user.id,
   });
 
-  for (const data of body.questions) {
+  body.questions.forEach(async (data, index) => {
     const questionType = await QuestionTypesModel.findOne({
       attributes: ['ID'],
       where: { Type: { [Op.eq]: data.question.Type } },
@@ -124,21 +127,24 @@ const createQuiz = async (req, res) => {
 
     const question = await QuestionsModel.create({
       ...data.question,
+      ID: index,
       QuizID: quiz.ID,
       TypeID: questionType.ID,
     });
     if (!question)
       throw new error.BadRequestError('Error! Something went wrong.');
 
-    for (const answer of data.answers) {
+    data.answers.forEach(async (answer, index) => {
       const created = await AnswersModel.create({
         ...answer,
+        ID: index,
         QuestionID: question.ID,
+        QuizID: quiz.ID,
       });
       if (!created)
         throw new error.BadRequestError('Error! Something went wrong.');
-    }
-  }
+    });
+  });
 
   res.status(201).json({ message: `Quiz has been created` });
 };
@@ -166,7 +172,7 @@ const updateQuiz = async (req, res) => {
 
   await QuestionsModel.destroy({ where: { QuizID: { [Op.eq]: quizId } } });
 
-  for (const data of body.questions) {
+  for (const [index, data] of body.questions.entries()) {
     const questionType = await QuestionTypesModel.findOne({
       attributes: ['ID'],
       where: { Type: { [Op.eq]: data.question.Type } },
@@ -176,16 +182,19 @@ const updateQuiz = async (req, res) => {
 
     const question = await QuestionsModel.create({
       ...data.question,
+      ID: index,
       QuizID: quiz.ID,
       TypeID: questionType.ID,
     });
     if (!question)
       throw new error.BadRequestError('Error! Something went wrong.');
 
-    for (const answer of data.answers) {
+    for (const [index, answer] of data.answers.entries()) {
       const created = await AnswersModel.create({
         ...answer,
+        ID: index,
         QuestionID: question.ID,
+        QuizID: quiz.ID,
       });
       if (!created)
         throw new error.BadRequestError('Error! Something went wrong.');
