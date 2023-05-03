@@ -1,31 +1,41 @@
 const Questions = (sequelize, Sequelize) => {
   return sequelize.define(
-    'Questions',
+    'questions',
     {
-      ID: {
+      id: {
         type: Sequelize.INTEGER,
         allowNull: false,
         primaryKey: true,
+        autoIncrement: true,
       },
-      QuizID: {
+      quizId: {
         type: Sequelize.INTEGER,
         allowNull: false,
+        primaryKey: true,
+        references: {
+          model: 'quizzes',
+          key: 'id',
+        },
       },
-      TypeID: {
+      typeId: {
         type: Sequelize.INTEGER,
         allowNull: false,
+        references: {
+          model: 'questionTypes',
+          key: 'id',
+        },
       },
-      Question: {
+      question: {
         type: Sequelize.STRING(255),
         allowNull: false,
       },
-      Path: {
+      path: {
         type: Sequelize.STRING(255),
         allowNull: true,
       },
     },
     {
-      tableName: 'Questions',
+      tableName: 'questions',
       timestamps: false,
     },
   );

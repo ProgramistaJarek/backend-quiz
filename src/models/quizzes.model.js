@@ -1,27 +1,35 @@
 const Quizzes = (sequelize, Sequelize) => {
   return sequelize.define(
-    'Quizzes',
+    'quizzes',
     {
-      ID: {
+      id: {
         type: Sequelize.INTEGER,
         primaryKey: true,
         autoIncrement: true,
       },
-      AuthorID: {
+      authorId: {
         type: Sequelize.INTEGER,
         allowNull: false,
+        references: {
+          model: 'users',
+          key: 'id',
+        },
       },
-      TypeID: {
+      typeId: {
         type: Sequelize.INTEGER,
         allowNull: false,
+        references: {
+          model: 'quizTypes',
+          key: 'id',
+        },
       },
-      Name: {
+      name: {
         type: Sequelize.STRING(128),
         allowNull: false,
       },
     },
     {
-      tableName: 'Quizzes',
+      tableName: 'quizzes',
     },
   );
 };

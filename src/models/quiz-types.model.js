@@ -1,20 +1,20 @@
 const QuizTypes = (sequelize, Sequelize) => {
   return sequelize.define(
-    'QuizTypes',
+    'quizTypes',
     {
-      ID: {
+      id: {
         type: Sequelize.INTEGER,
         allowNull: false,
         primaryKey: true,
         autoIncrement: true,
       },
-      Type: {
+      type: {
         type: Sequelize.STRING(32),
         allowNull: false,
       },
     },
     {
-      tableName: 'QuizTypes',
+      tableName: 'quizTypes',
       timestamps: true,
     },
   );

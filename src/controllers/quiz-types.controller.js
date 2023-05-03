@@ -7,7 +7,7 @@ const helpers = require('../utils/helpers');
 
 const getQuizTypes = async (req, res) => {
   const quizTypes = await QuizTypesModel.findAll({
-    attributes: ['ID', 'Type'],
+    attributes: ['id', 'type'],
   });
 
   res.json(quizTypes);
@@ -18,8 +18,8 @@ const getQuizTypeById = async (req, res) => {
   helpers.checkIfNumber(quizTypeId);
 
   const quizType = await QuizTypesModel.findOne({
-    attributes: ['ID', 'Type'],
-    where: { ID: { [Op.eq]: quizTypeId } },
+    attributes: ['id', 'type'],
+    where: { id: { [Op.eq]: quizTypeId } },
   });
   if (!quizType)
     throw new error.BadRequestError('Error! Something went wrong.');
@@ -28,21 +28,21 @@ const getQuizTypeById = async (req, res) => {
 };
 
 const createQuizType = async (req, res) => {
-  if (!req.body.Type || Object.keys(req.body).length !== 1) {
-    throw new error.BadRequestError('Error! You need to provide Type.');
+  if (!req.body.type || Object.keys(req.body).length !== 1) {
+    throw new error.BadRequestError('Error! You need to provide type.');
   }
 
   const response = await QuizTypesModel.findAll();
   response.forEach((e) => {
     if (
-      e.Type.replace(/\s+/g, '').toLowerCase() ===
-      req.body.Type.replace(/\s+/g, '').toLowerCase()
+      e.type.replace(/\s+/g, '').toLowerCase() ===
+      req.body.type.replace(/\s+/g, '').toLowerCase()
     )
-      throw new error.BadRequestError('Type actully exist');
+      throw new error.BadRequestError('type actully exist');
   });
 
   const created = await QuizTypesModel.create({
-    Type: req.body.Type.replace(/\s+/g, ' '),
+    type: req.body.type.replace(/\s+/g, ' '),
   });
   if (!created) throw new error.BadRequestError('Error! Something went wrong.');
 
@@ -55,8 +55,8 @@ const updateQuizType = async (req, res) => {
 
   helpers.checkIfNumber(quizTypeId);
 
-  if (!quizTypeBody.Type || Object.keys(req.body).length !== 1) {
-    throw new error.BadRequestError('Error! You need to provide Type.');
+  if (!quizTypeBody.type || Object.keys(req.body).length !== 1) {
+    throw new error.BadRequestError('Error! You need to provide type.');
   }
 
   const response = await QuizTypesModel.findAll();
@@ -64,17 +64,17 @@ const updateQuizType = async (req, res) => {
     throw new error.BadRequestError('Error! Something went wrong.');
   response.forEach((e) => {
     if (
-      e.Type.replace(/\s+/g, '').toLowerCase() ===
-      req.body.Type.replace(/\s+/g, '').toLowerCase()
+      e.type.replace(/\s+/g, '').toLowerCase() ===
+      req.body.type.replace(/\s+/g, '').toLowerCase()
     )
-      throw new error.BadRequestError('Type actully exist');
+      throw new error.BadRequestError('type actully exist');
   });
 
   const updated = await QuizTypesModel.update(
-    { Type: quizTypeBody.Type.replace(/\s+/g, ' ') },
-    { where: { ID: { [Op.eq]: quizTypeId } } },
+    { type: quizTypeBody.type.replace(/\s+/g, ' ') },
+    { where: { id: { [Op.eq]: quizTypeId } } },
   );
-  if (!updated[0]) throw new error.BadRequestError('Type do not exists.');
+  if (!updated[0]) throw new error.BadRequestError('type do not exists.');
 
   res.status(201).json({ message: `Quiz type has been updated` });
 };
@@ -84,13 +84,13 @@ const deleteQuizTypeById = async (req, res) => {
   helpers.checkIfNumber(quizTypeId);
 
   const response = await QuizTypesModel.destroy({
-    where: { ID: { [Op.eq]: quizTypeId } },
+    where: { id: { [Op.eq]: quizTypeId } },
   });
-  if (!response) throw new error.BadRequestError('Type do not exist');
+  if (!response) throw new error.BadRequestError('type do not exist');
 
   res
     .status(200)
-    .json({ message: `Quiz type with ID ${quizTypeId} has been deleted` });
+    .json({ message: `Quiz type with id ${quizTypeId} has been deleted` });
 };
 
 module.exports = {

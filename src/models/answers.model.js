@@ -1,36 +1,55 @@
 const Answers = (sequelize, Sequelize) => {
   return sequelize.define(
-    'Answers',
+    'answers',
     {
-      ID: {
+      id: {
         type: Sequelize.INTEGER,
         allowNull: false,
         primaryKey: true,
+        autoIncrement: true,
       },
-      QuestionID: {
+      answerId: {
         type: Sequelize.INTEGER,
         allowNull: false,
       },
-      QuizID: {
+      questionId: {
         type: Sequelize.INTEGER,
         allowNull: false,
+        references: {
+          model: 'questions',
+          key: 'id',
+        },
       },
-      Answer: {
+      quizId: {
+        type: Sequelize.INTEGER,
+        allowNull: false,
+        references: {
+          model: 'quizzes',
+          key: 'id',
+        },
+      },
+      answer: {
         type: Sequelize.STRING(255),
         allowNull: false,
       },
-      IsCorrect: {
+      isCorrect: {
         type: Sequelize.BOOLEAN,
         allowNull: false,
       },
-      Path: {
+      path: {
         type: Sequelize.STRING(255),
         allowNull: true,
       },
     },
     {
-      tableName: 'Answers',
+      tableName: 'answers',
       timestamps: false,
+      indexes: [
+        {
+          unique: false,
+          fields: ['questionId'],
+        },
+      ],
     },
   );
 };

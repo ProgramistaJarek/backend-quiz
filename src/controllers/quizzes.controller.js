@@ -12,10 +12,10 @@ const helpers = require('../utils/helpers');
 const getQuizzes = async (req, res) => {
   const quizzes = await QuizzesModel.findAll({
     attributes: [
-      'ID',
-      'Name',
-      'CreatedAt',
-      [Sequelize.col('QuizType.Type'), 'Type'],
+      'id',
+      'name',
+      'createdAt',
+      [Sequelize.col('quizType.type'), 'type'],
     ],
     include: [{ model: QuizTypesModel, attributes: [] }],
   });
@@ -34,10 +34,10 @@ const getQuizByDate = async (req, res) => {
 
   const quizzes = await QuizzesModel.findAll({
     attributes: [
-      'ID',
-      'Name',
-      'CreatedAt',
-      [Sequelize.col('QuizType.Type'), 'Type'],
+      'id',
+      'name',
+      'createdAt',
+      [Sequelize.col('quizType.type'), 'type'],
     ],
     include: [
       {
@@ -45,7 +45,7 @@ const getQuizByDate = async (req, res) => {
         attributes: [],
       },
     ],
-    order: [['CreatedAt', quizOrder]],
+    order: [['createdAt', quizOrder]],
     limit: +quizNumber,
   });
 
@@ -58,23 +58,23 @@ const getQuiz = async (req, res) => {
 
   let quiz = await QuizzesModel.findOne({
     attributes: [
-      'ID',
-      'AuthorID',
-      'Name',
-      'CreatedAt',
-      [Sequelize.col('QuizType.Type'), 'Type'],
+      'id',
+      'authorId',
+      'name',
+      'createdAt',
+      [Sequelize.col('quizType.type'), 'type'],
     ],
     include: [{ model: QuizTypesModel, attributes: [] }],
-    where: { ID: { [Op.eq]: quizId } },
+    where: { id: { [Op.eq]: quizId } },
   });
   if (!quiz) throw new error.BadRequestError('Quiz do not exist.');
 
   const questionsByQuizId = await QuestionsModel.findAll({
     attributes: [
-      'ID',
-      'Question',
-      'Path',
-      [Sequelize.col('QuestionType.Type'), 'Type'],
+      'id',
+      'question',
+      'path',
+      [Sequelize.col('QuestionType.type'), 'type'],
     ],
     include: [
       {
@@ -82,17 +82,17 @@ const getQuiz = async (req, res) => {
         attributes: [],
       },
     ],
-    where: { QuizID: { [Op.eq]: quizId } },
+    where: { quizId: { [Op.eq]: quizId } },
   });
 
   const questions = [];
   for (const question of questionsByQuizId) {
-    const questionId = question.ID;
+    const questionId = question.id;
     const answersForQuestion = await AnswersModel.findAll({
-      attributes: ['ID', 'Answer', 'IsCorrect', 'Path'],
+      attributes: ['id', 'answer', 'isCorrect', 'path'],
       where: {
-        QuestionID: { [Op.eq]: questionId },
-        QuizID: { [Op.eq]: quizId },
+        questionId: { [Op.eq]: questionId },
+        quizId: { [Op.eq]: quizId },
       },
     });
     questions.push({ question, answers: answersForQuestion });
@@ -100,7 +100,7 @@ const getQuiz = async (req, res) => {
 
   quiz = {
     ...quiz.dataValues,
-    isEditable: quiz.AuthorID === req.user.id,
+    isEditable: quiz.authorId === req.user.id,
   };
   res.json({ quiz, questions });
 };
@@ -114,22 +114,22 @@ const createQuiz = async (req, res) => {
 
   const quiz = await QuizzesModel.create({
     ...body.quiz,
-    AuthorID: req.user.id,
+    authorId: req.user.id,
   });
 
   body.questions.forEach(async (data, index) => {
     const questionType = await QuestionTypesModel.findOne({
-      attributes: ['ID'],
-      where: { Type: { [Op.eq]: data.question.Type } },
+      attributes: ['id'],
+      where: { type: { [Op.eq]: data.question.type } },
     });
     if (!questionType)
       throw new error.BadRequestError('Error! Something went wrong.');
 
     const question = await QuestionsModel.create({
       ...data.question,
-      ID: index,
-      QuizID: quiz.ID,
-      TypeID: questionType.ID,
+      id: index,
+      quizId: quiz.id,
+      typeID: questionType.id,
     });
     if (!question)
       throw new error.BadRequestError('Error! Something went wrong.');
@@ -137,9 +137,9 @@ const createQuiz = async (req, res) => {
     data.answers.forEach(async (answer, index) => {
       const created = await AnswersModel.create({
         ...answer,
-        ID: index,
-        QuestionID: question.ID,
-        QuizID: quiz.ID,
+        id: index,
+        questionId: question.id,
+        quizId: quiz.id,
       });
       if (!created)
         throw new error.BadRequestError('Error! Something went wrong.');
@@ -161,30 +161,30 @@ const updateQuiz = async (req, res) => {
   helpers.checkQuestions(body.questions);
 
   const quiz = await QuizzesModel.findOne({
-    where: { ID: { [Op.eq]: quizId } },
+    where: { id: { [Op.eq]: quizId } },
   });
   if (!quiz) throw new error.BadRequestError('Quiz do not exists.');
 
-  if (req.user.id !== quiz.AuthorID)
+  if (req.user.id !== quiz.authorId)
     throw new error.BadRequestError(
       'You are not authorized to update this quiz.',
     );
 
-  await QuestionsModel.destroy({ where: { QuizID: { [Op.eq]: quizId } } });
+  await QuestionsModel.destroy({ where: { quizId: { [Op.eq]: quizId } } });
 
   for (const [index, data] of body.questions.entries()) {
     const questionType = await QuestionTypesModel.findOne({
-      attributes: ['ID'],
-      where: { Type: { [Op.eq]: data.question.Type } },
+      attributes: ['id'],
+      where: { type: { [Op.eq]: data.question.type } },
     });
     if (!questionType)
       throw new error.BadRequestError('Error! Something went wrong.');
 
     const question = await QuestionsModel.create({
       ...data.question,
-      ID: index,
-      QuizID: quiz.ID,
-      TypeID: questionType.ID,
+      id: index,
+      quizId: quiz.id,
+      typeID: questionType.id,
     });
     if (!question)
       throw new error.BadRequestError('Error! Something went wrong.');
@@ -192,9 +192,9 @@ const updateQuiz = async (req, res) => {
     for (const [index, answer] of data.answers.entries()) {
       const created = await AnswersModel.create({
         ...answer,
-        ID: index,
-        QuestionID: question.ID,
-        QuizID: quiz.ID,
+        id: index,
+        questionId: question.id,
+        quizId: quiz.id,
       });
       if (!created)
         throw new error.BadRequestError('Error! Something went wrong.');
@@ -211,15 +211,15 @@ const deleteQuizById = async (req, res) => {
   helpers.checkIfNumber(quizId);
 
   const quiz = await QuizzesModel.findOne({
-    where: { ID: { [Op.eq]: quizId } },
+    where: { id: { [Op.eq]: quizId } },
   });
   if (!quiz) throw new error.BadRequestError('Quiz do not exists.');
 
-  if (quiz.AuthorID !== req.user.id)
+  if (quiz.authorId !== req.user.id)
     throw new error.BadRequestError('You cannot delete this quiz');
 
-  await QuizzesModel.destroy({ where: { ID: { [Op.eq]: quizId } } });
-  res.status(200).json({ message: `Quiz with ID ${quizId} has been deleted` });
+  await QuizzesModel.destroy({ where: { id: { [Op.eq]: quizId } } });
+  res.status(200).json({ message: `Quiz with id ${quizId} has been deleted` });
 };
 
 module.exports = {

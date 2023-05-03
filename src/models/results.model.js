@@ -1,28 +1,36 @@
 const Results = (sequelize, Sequelize) => {
   return sequelize.define(
-    'Results',
+    'results',
     {
-      QuizID: {
+      quizId: {
         type: Sequelize.INTEGER,
         allowNull: false,
         primaryKey: true,
+        references: {
+          model: 'quizzes',
+          key: 'id',
+        },
       },
-      UserID: {
+      userId: {
         type: Sequelize.INTEGER,
         allowNull: false,
         primaryKey: true,
+        references: {
+          model: 'users',
+          key: 'id',
+        },
       },
-      PlayerName: {
+      playerName: {
         type: Sequelize.STRING(16),
         allowNull: false,
       },
-      Score: {
+      score: {
         type: Sequelize.INTEGER,
         allowNull: true,
       },
     },
     {
-      tableName: 'Results',
+      tableName: 'results',
       timestamps: true,
     },
   );

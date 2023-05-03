@@ -1,26 +1,25 @@
 const User = (sequelize, Sequelize) => {
   return sequelize.define(
-    'Users',
+    'users',
     {
-      ID: {
+      id: {
         type: Sequelize.INTEGER,
         autoIncrement: true,
         allowNull: false,
         primaryKey: true,
       },
-      Nickname: {
+      username: {
         type: Sequelize.STRING(16),
         allowNull: false,
         unique: true,
       },
-      Password: {
+      password: {
         type: Sequelize.STRING(255),
         allowNull: false,
       },
     },
     {
-      tableName: 'Users',
-      // timestamps: false,
+      tableName: 'users',
     },
   );
 };

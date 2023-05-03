@@ -10,12 +10,12 @@ const helpers = require('../utils/helpers');
 const getResults = async (req, res) => {
   const ranking = await ResultsModel.findAll({
     attributes: [
-      'QuizID',
-      [Sequelize.col('Quiz.Name'), 'Name'],
-      [Sequelize.col('Quiz->QuizType.Type'), 'Type'],
-      'PlayerName',
-      'Score',
-      'CreatedAt',
+      'quizId',
+      [Sequelize.col('Quiz.name'), 'name'],
+      [Sequelize.col('Quiz->quizType.type'), 'type'],
+      'playerName',
+      'score',
+      'createdAt',
     ],
     include: [
       {
@@ -24,12 +24,12 @@ const getResults = async (req, res) => {
         include: {
           model: QuizTypes,
           attributes: [],
-          as: 'QuizType',
+          as: 'quizType',
         },
       },
     ],
     where: {
-      Score: {
+      score: {
         [Op.not]: null,
       },
     },
@@ -39,13 +39,9 @@ const getResults = async (req, res) => {
 };
 
 const createResult = async (req, res) => {
-  console.log({
-    ...req.body,
-    UserID: req.user.id,
-  });
   const created = await ResultsModel.create({
     ...req.body,
-    UserID: req.user.id,
+    userId: req.user.id,
   });
   if (!created) throw new error.BadRequestError('Error! Something went wrong.');
   res.status(201).json({ message: `Result has been created` });
@@ -57,17 +53,17 @@ const getResultsMost = async (req, res) => {
 
   const results = await ResultsModel.findAll({
     attributes: [
-      'QuizID',
-      [Sequelize.fn('COUNT', Sequelize.col('Score')), 'Count'],
-      [Sequelize.col('Quiz.Name'), 'Name'],
-      [Sequelize.col('Quiz.CreatedAt'), 'CreatedAt'],
-      [Sequelize.col('Quiz->QuizType.Type'), 'Type'],
+      'quizId',
+      [Sequelize.fn('COUNT', Sequelize.col('score')), 'Count'],
+      [Sequelize.col('Quiz.name'), 'name'],
+      [Sequelize.col('Quiz.createdAt'), 'createdAt'],
+      [Sequelize.col('Quiz->quizType.type'), 'type'],
     ],
     where: {
-      Score: { [Op.ne]: null },
+      score: { [Op.ne]: null },
     },
-    group: 'QuizID',
-    order: [[Sequelize.fn('COUNT', Sequelize.col('Score')), 'DESC']],
+    group: 'quizId',
+    order: [[Sequelize.fn('COUNT', Sequelize.col('score')), 'DESC']],
     limit: +numberToReturn,
     include: [
       {
@@ -76,7 +72,7 @@ const getResultsMost = async (req, res) => {
         include: {
           model: QuizTypes,
           attributes: [],
-          as: 'QuizType',
+          as: 'quizType',
         },
       },
     ],
@@ -88,18 +84,18 @@ const getResultsMost = async (req, res) => {
 const getResultsByUserId = async (req, res) => {
   const results = await ResultsModel.findAll({
     attributes: [
-      'QuizID',
-      'PlayerName',
-      'Score',
-      [Sequelize.col('Quiz.Name'), 'Name'],
-      [Sequelize.col('Quiz->QuizType.Type'), 'Type'],
-      [Sequelize.col('Quiz.CreatedAt'), 'CreatedAt'],
+      'quizId',
+      'playerName',
+      'score',
+      [Sequelize.col('Quiz.name'), 'name'],
+      [Sequelize.col('Quiz->quizType.type'), 'type'],
+      [Sequelize.col('Quiz.createdAt'), 'createdAt'],
     ],
     where: {
-      Score: { [Op.ne]: null },
+      score: { [Op.ne]: null },
       UserId: { [Op.eq]: req.user.id },
     },
-    group: 'QuizID',
+    group: 'quizId',
     include: [
       {
         model: Quizzes,
@@ -107,7 +103,7 @@ const getResultsByUserId = async (req, res) => {
         include: {
           model: QuizTypes,
           attributes: [],
-          as: 'QuizType',
+          as: 'quizType',
         },
       },
     ],

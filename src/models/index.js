@@ -31,28 +31,22 @@ db.user = require('./user.model.js')(sequelize, Sequelize);
 db.answers = require('./answers.model.js')(sequelize, Sequelize);
 db.questions = require('./questions.model.js')(sequelize, Sequelize);
 
-db.quizzes.hasMany(db.results, { foreignKey: 'QuizID' });
-db.results.belongsTo(db.quizzes, { foreignKey: 'QuizID' });
+db.quizzes.hasMany(db.results, { foreignKey: 'quizId' });
+db.results.belongsTo(db.quizzes, { foreignKey: 'quizId' });
 
-db.quizTypes.hasMany(db.quizzes, { foreignKey: 'TypeID' });
-db.quizzes.belongsTo(db.quizTypes, { foreignKey: 'TypeID' });
+db.quizTypes.hasMany(db.quizzes, { foreignKey: 'typeId' });
+db.quizzes.belongsTo(db.quizTypes, { foreignKey: 'typeId' });
 
-db.user.hasMany(db.quizzes, { foreignKey: 'AuthorID' });
-db.quizzes.belongsTo(db.user, { foreignKey: 'AuthorID' });
+db.user.hasMany(db.quizzes, { foreignKey: 'authorId' });
+db.quizzes.belongsTo(db.user, { foreignKey: 'authorId' });
 
-db.questions.belongsTo(db.quizzes, {
-  foreignKey: 'QuizID',
-  onDelete: 'cascade',
-});
-db.questions.belongsTo(db.questionTypes, { foreignKey: 'TypeID' });
+db.questions.belongsTo(db.quizzes, { foreignKey: 'quizId' });
+db.questions.belongsTo(db.questionTypes, { foreignKey: 'typeId' });
 
-db.answers.belongsTo(db.questions, {
-  foreignKey: 'QuestionID',
-  onDelete: 'cascade',
-});
-db.questions.hasMany(db.answers, { foreignKey: 'QuestionID' });
+db.quizzes.hasMany(db.answers, { foreignKey: 'quizId' });
+db.answers.belongsTo(db.quizzes, { foreignKey: 'quizId' });
 
-db.answers.belongsTo(db.quizzes, { foreignKey: 'QuizID', onDelete: 'cascade' });
-db.quizzes.hasMany(db.answers, { foreignKey: 'QuizID' });
+db.answers.belongsTo(db.questions, { foreignKey: 'questionId' });
+db.questions.hasMany(db.answers, { foreignKey: 'questionId' });
 
 module.exports = db;

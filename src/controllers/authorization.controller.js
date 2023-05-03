@@ -20,20 +20,20 @@ const loginUser = async (req, res) => {
   }
 
   const existingUser = await UserModel.findOne({
-    where: { Nickname: { [Op.eq]: username } },
+    where: { username: { [Op.eq]: username } },
   });
   if (!existingUser) throw new error.BadRequestError('User do not exist');
 
-  if (!(await bcrypt.compare(password, existingUser.Password)))
+  if (!(await bcrypt.compare(password, existingUser.password)))
     throw new error.BadRequestError('Wrong details please check at once');
 
   const token = generateAccessToken({
-    username: existingUser.Nickname,
-    id: existingUser.ID,
+    username: existingUser.username,
+    id: existingUser.id,
   });
   res.status(200).json({
-    id: existingUser.ID,
-    Nickname: existingUser.Nickname,
+    id: existingUser.id,
+    username: existingUser.username,
     token: token,
   });
 };
@@ -52,7 +52,7 @@ const signupUser = async (req, res) => {
   }
 
   const response = await UserModel.findAll({
-    where: { Nickname: { [Op.eq]: username } },
+    where: { username: { [Op.eq]: username } },
   });
   if (response.length)
     throw new error.BadRequestError('Error! Username is taken');
@@ -63,33 +63,33 @@ const signupUser = async (req, res) => {
   });
 
   const existingUser = await UserModel.create({
-    Nickname: username,
-    Password: passwordHash,
+    username: username,
+    password: passwordHash,
   });
 
   const token = generateAccessToken({
-    username: existingUser.Nickname,
-    id: existingUser.ID,
+    username: existingUser.username,
+    id: existingUser.id,
   });
   if (!token) throw new error.BadRequestError('Error! Something went wrong.');
 
   res.status(201).json({
-    id: existingUser.ID,
-    Nickname: existingUser.Nickname,
+    id: existingUser.id,
+    username: existingUser.username,
     token: token,
   });
 };
 
 const getUser = async (req, res) => {
   const existingUser = await UserModel.findOne({
-    where: { ID: { [Op.eq]: req.user.id } },
+    where: { id: { [Op.eq]: req.user.id } },
   });
   if (!existingUser)
     throw new error.BadRequestError('Error! Something went wrong.');
 
   res.status(200).json({
-    ID: existingUser.ID,
-    Nickname: existingUser.Nickname,
+    id: existingUser.id,
+    username: existingUser.username,
     token: req.user.token,
   });
 };
@@ -111,20 +111,20 @@ const changeLogin = async (req, res) => {
     throw new error.BadRequestError('Username cannot be the same.');
 
   const user = await UserModel.findOne({
-    where: { Nickname: { [Op.eq]: oldUsername } },
+    where: { username: { [Op.eq]: oldUsername } },
   });
   if (!user) throw new error.BadRequestError('User does not exist.');
-  if (user.ID !== req.user.id)
+  if (user.id !== req.user.id)
     throw new error.BadRequestError('Error! Something went wrong.');
 
   const checkIfExist = await UserModel.findOne({
-    where: { Nickname: { [Op.eq]: newUsername } },
+    where: { username: { [Op.eq]: newUsername } },
   });
   if (checkIfExist) throw new error.BadRequestError('Username is taken.');
 
   await UserModel.update(
-    { Nickname: newUsername },
-    { where: { ID: { [Op.eq]: user.ID } } },
+    { username: newUsername },
+    { where: { id: { [Op.eq]: user.id } } },
   );
   res.json({ message: 'Username updated successfully' });
 };
@@ -147,19 +147,19 @@ const changePassword = async (req, res) => {
     throw new error.BadRequestError('Password cannot be the same.');
 
   const user = await UserModel.findOne({
-    where: { Nickname: { [Op.eq]: username } },
+    where: { username: { [Op.eq]: username } },
   });
   if (!user) throw new error.BadRequestError('User does not exist.');
-  if (user.ID !== req.user.id)
+  if (user.id !== req.user.id)
     throw new error.BadRequestError('Error! Something went wrong.');
 
-  const isMatch = await bcrypt.compare(oldPassword, user.Password);
+  const isMatch = await bcrypt.compare(oldPassword, user.password);
   if (!isMatch) throw new error.BadRequestError('Old password is incorrect.');
 
   const passwordHash = await bcrypt.hash(newPassword, 10);
   await UserModel.update(
-    { Password: passwordHash },
-    { where: { ID: { [Op.eq]: user.ID } } },
+    { password: passwordHash },
+    { where: { id: { [Op.eq]: user.id } } },
   );
   res.json({ message: 'Password updated successfully' });
 };
