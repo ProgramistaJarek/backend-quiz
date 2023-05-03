@@ -72,6 +72,7 @@ const getQuiz = async (req, res) => {
   const questionsByQuizId = await QuestionsModel.findAll({
     attributes: [
       'id',
+      'questionId',
       'question',
       'path',
       [Sequelize.col('QuestionType.type'), 'type'],
@@ -89,7 +90,7 @@ const getQuiz = async (req, res) => {
   for (const question of questionsByQuizId) {
     const questionId = question.id;
     const answersForQuestion = await AnswersModel.findAll({
-      attributes: ['id', 'answer', 'isCorrect', 'path'],
+      attributes: ['answerId', 'answer', 'isCorrect', 'path'],
       where: {
         questionId: { [Op.eq]: questionId },
         quizId: { [Op.eq]: quizId },
