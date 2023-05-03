@@ -8,6 +8,10 @@ const Questions = (sequelize, Sequelize) => {
         primaryKey: true,
         autoIncrement: true,
       },
+      questionId: {
+        type: Sequelize.INTEGER,
+        allowNull: false,
+      },
       quizId: {
         type: Sequelize.INTEGER,
         allowNull: false,

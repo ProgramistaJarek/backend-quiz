@@ -107,17 +107,17 @@ const getQuiz = async (req, res) => {
 
 const createQuiz = async (req, res) => {
   const body = req.body;
-  if (!helpers.checkIfBodyOfQuizIsCorrect(body))
-    throw new error.BadRequestError('Invalid request body');
+  /* if (!helpers.checkIfBodyOfQuizIsCorrect(body))
+    throw new error.BadRequestError('Invalid request body'); */
 
-  helpers.checkQuestions(body.questions);
+  // helpers.checkQuestions(body.questions);
 
   const quiz = await QuizzesModel.create({
     ...body.quiz,
     authorId: req.user.id,
   });
 
-  body.questions.forEach(async (data, index) => {
+  for (const [index, data] of body.questions.entries()) {
     const questionType = await QuestionTypesModel.findOne({
       attributes: ['id'],
       where: { type: { [Op.eq]: data.question.type } },
@@ -127,24 +127,24 @@ const createQuiz = async (req, res) => {
 
     const question = await QuestionsModel.create({
       ...data.question,
-      id: index,
+      questionId: index + 1,
       quizId: quiz.id,
-      typeID: questionType.id,
+      typeId: questionType.id,
     });
     if (!question)
       throw new error.BadRequestError('Error! Something went wrong.');
 
-    data.answers.forEach(async (answer, index) => {
+    for (const [index, answer] of data.answers.entries()) {
       const created = await AnswersModel.create({
         ...answer,
-        id: index,
+        answerId: index + 1,
         questionId: question.id,
         quizId: quiz.id,
       });
       if (!created)
         throw new error.BadRequestError('Error! Something went wrong.');
-    });
-  });
+    }
+  }
 
   res.status(201).json({ message: `Quiz has been created` });
 };
@@ -155,10 +155,10 @@ const updateQuiz = async (req, res) => {
 
   helpers.checkIfNumber(quizId);
 
-  if (!helpers.checkIfBodyOfQuizIsCorrect(body))
+  /* if (!helpers.checkIfBodyOfQuizIsCorrect(body))
     throw new error.BadRequestError('Invalid request body');
 
-  helpers.checkQuestions(body.questions);
+  helpers.checkQuestions(body.questions); */
 
   const quiz = await QuizzesModel.findOne({
     where: { id: { [Op.eq]: quizId } },
@@ -182,9 +182,9 @@ const updateQuiz = async (req, res) => {
 
     const question = await QuestionsModel.create({
       ...data.question,
-      id: index,
+      questionId: index + 1,
       quizId: quiz.id,
-      typeID: questionType.id,
+      typeId: questionType.id,
     });
     if (!question)
       throw new error.BadRequestError('Error! Something went wrong.');
@@ -192,7 +192,7 @@ const updateQuiz = async (req, res) => {
     for (const [index, answer] of data.answers.entries()) {
       const created = await AnswersModel.create({
         ...answer,
-        id: index,
+        answerId: index + 1,
         questionId: question.id,
         quizId: quiz.id,
       });
