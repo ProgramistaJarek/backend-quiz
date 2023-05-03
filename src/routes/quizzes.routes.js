@@ -9,6 +9,7 @@ const tryCatch = require('../utils/tryCatch');
 router
   .get('/', tryCatch(quizzes.getQuizzes))
   .get('/quiz/:id', checkForToken, tryCatch(quizzes.getQuiz))
+  .get('/quiz/type/:typeId', tryCatch(quizzes.getQuizByType))
   .get(
     '/quiz/new/:order/:many',
     checkForToken,

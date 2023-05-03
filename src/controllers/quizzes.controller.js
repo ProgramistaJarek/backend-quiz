@@ -22,6 +22,23 @@ const getQuizzes = async (req, res) => {
   res.json(quizzes);
 };
 
+const getQuizByType = async (req, res) => {
+  const typeId = req.params.typeId;
+  helpers.checkIfNumber(typeId);
+
+  const quizzes = await QuizzesModel.findAll({
+    attributes: [
+      'id',
+      'name',
+      'createdAt',
+      [Sequelize.col('quizType.type'), 'type'],
+    ],
+    include: [{ model: QuizTypesModel, attributes: [] }],
+    where: { typeId: { [Op.eq]: typeId } },
+  });
+  res.json(quizzes);
+};
+
 const getQuizByDate = async (req, res) => {
   const quizOrder = req.params.order;
   const quizNumber = req.params.many;
@@ -34,7 +51,7 @@ const getQuizByDate = async (req, res) => {
 
   const quizzes = await QuizzesModel.findAll({
     attributes: [
-      'id',
+      ['id', 'quizId'],
       'name',
       'createdAt',
       [Sequelize.col('quizType.type'), 'type'],
@@ -230,4 +247,5 @@ module.exports = {
   deleteQuizById,
   getQuiz,
   getQuizByDate,
+  getQuizByType,
 };
