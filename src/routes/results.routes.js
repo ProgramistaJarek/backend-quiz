@@ -4,12 +4,13 @@ var router = express.Router();
 const results = require('../controllers/results.controller');
 const authenticateToken = require('../utils/authenticateToken');
 const tryCatch = require('../utils/tryCatch');
+const checkForToken = require('../utils/checkForToken');
 
 router
   .get('/', tryCatch(results.getResults))
   .get('/most/:most', tryCatch(results.getResultsMost))
   .get('/user', authenticateToken, tryCatch(results.getResultsByUserId));
 
-router.post('/create', authenticateToken, tryCatch(results.createResult));
+router.post('/create', checkForToken, tryCatch(results.returnScore));
 
 module.exports = router;

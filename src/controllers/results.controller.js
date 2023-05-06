@@ -4,6 +4,10 @@ const ResultsModel = db.results;
 const Quizzes = db.quizzes;
 const QuizTypes = db.quizTypes;
 
+const AnswersModel = db.answers;
+const QuestionsModel = db.questions;
+const QuestionTypesModel = db.questionTypes;
+
 const error = require('../errors');
 const helpers = require('../utils/helpers');
 
@@ -112,9 +116,112 @@ const getResultsByUserId = async (req, res) => {
   res.json(results);
 };
 
+const getQeustions = async (id, userId) => {
+  const quizId = id;
+
+  let quiz = await Quizzes.findOne({
+    attributes: ['id', 'authorId'],
+    where: { id: { [Op.eq]: quizId } },
+  });
+  if (!quiz) throw new error.BadRequestError('Quiz do not exist.');
+
+  if (quiz.authorId === userId)
+    throw new error.BadRequestError('nie możesz wypełnić tego quizu');
+
+  const questionsByQuizId = await QuestionsModel.findAll({
+    attributes: [
+      'id',
+      'questionId',
+      [Sequelize.col('QuestionType.type'), 'type'],
+    ],
+    include: [
+      {
+        model: QuestionTypesModel,
+        attributes: [],
+      },
+    ],
+    where: { quizId: { [Op.eq]: quizId } },
+  });
+
+  const questions = [];
+  for (const question of questionsByQuizId) {
+    const questionId = question.id;
+    const answersForQuestion = await AnswersModel.findAll({
+      attributes: ['answerId', 'answer', 'isCorrect', 'path'],
+      where: {
+        questionId: { [Op.eq]: questionId },
+        quizId: { [Op.eq]: quizId },
+      },
+    });
+    questions.push({ question, answers: answersForQuestion });
+  }
+  return questions;
+};
+
+const returnScore = async (req, res) => {
+  const { quiz, questions, playerName } = req.body;
+  const userId = req.user.id;
+
+  const quizQeustions = await getQeustions(quiz.id, userId);
+  const score = calculateScore(quizQeustions, questions);
+
+  const created = await ResultsModel.create({
+    quizId: quiz.id,
+    playerName: playerName
+      ? playerName
+      : req.user.username
+      ? req.user.username
+      : 'No name',
+    score: score ? score : 0,
+    userId: userId ? userId : 3,
+  });
+  if (!created) throw new error.BadRequestError('Error! Something went wrong.');
+
+  res.status(201).json({ message: `Result has been created`, score });
+};
+
+const calculateScore = (quizQuestions, userQuestions) => {
+  let score = 0;
+
+  for (const [index, question] of quizQuestions.entries()) {
+    const questionId = question.question.id;
+    const userQuestion = userQuestions[index];
+
+    if (userQuestion.question.id !== questionId) return;
+
+    for (const answer of question.answers) {
+      const answerId = answer.answerId;
+
+      if (
+        answer.isCorrect &&
+        userQuestion.answers.some((answer) => answer.answerId === answerId)
+      ) {
+        score++;
+      } else if (
+        !answer.isCorrect &&
+        userQuestion.answers.some((answer) => answer.answerId === answerId)
+      ) {
+        score--;
+      }
+    }
+  }
+
+  return ((score / maxScore(quizQuestions)) * 100).toFixed(2);
+};
+
+const maxScore = (quizQuestions) => {
+  let score = 0;
+
+  for (const question of quizQuestions)
+    for (const answer of question.answers) if (answer.isCorrect) score++;
+
+  return score;
+};
+
 module.exports = {
   getResults,
   createResult,
   getResultsMost,
   getResultsByUserId,
+  returnScore,
 };
