@@ -5,7 +5,6 @@ const Results = (sequelize, Sequelize) => {
       quizId: {
         type: Sequelize.INTEGER,
         allowNull: false,
-        primaryKey: true,
         references: {
           model: 'quizzes',
           key: 'id',
@@ -14,7 +13,6 @@ const Results = (sequelize, Sequelize) => {
       userId: {
         type: Sequelize.INTEGER,
         allowNull: false,
-        primaryKey: true,
         references: {
           model: 'users',
           key: 'id',
@@ -32,6 +30,16 @@ const Results = (sequelize, Sequelize) => {
     {
       tableName: 'results',
       timestamps: true,
+      indexes: [
+        {
+          unique: false,
+          fields: ['quizId'],
+        },
+        {
+          unique: false,
+          fields: ['userId'],
+        },
+      ],
     },
   );
 };

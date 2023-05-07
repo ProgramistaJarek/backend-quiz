@@ -44,12 +44,6 @@ const Answers = (sequelize, Sequelize) => {
     {
       tableName: 'answers',
       timestamps: false,
-      indexes: [
-        {
-          unique: false,
-          fields: ['questionId'],
-        },
-      ],
     },
   );
 };

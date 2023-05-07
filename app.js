@@ -31,7 +31,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 const db = require('./src/models');
 
 db.sequelize
-  .sync()
+  .sync({ force: true })
   .then(() => {
     console.log('Synced db.');
   })

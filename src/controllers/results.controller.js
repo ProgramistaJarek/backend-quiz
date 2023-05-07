@@ -169,7 +169,7 @@ const returnScore = async (req, res) => {
       ? req.user.username
       : 'No name',
     score: score ? score : 0,
-    userId: userId ? userId : 3,
+    userId: userId ? userId : 1,
   });
   if (!created) throw new error.BadRequestError('Error! Something went wrong.');
 
