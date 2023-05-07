@@ -29,11 +29,32 @@ app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
 const db = require('./src/models');
+const User = db.user;
+const QuestionType = db.questionTypes;
+const QuizType = db.quizTypes;
+const bcrypt = require('bcrypt');
 
 db.sequelize
-  .sync({ force: true })
+  .sync(/* { force: true } */)
   .then(() => {
     console.log('Synced db.');
+    /* User.create({
+      id: 1,
+      username: 'default',
+      password: bcrypt.hashSync('password', 10),
+    });
+
+    QuestionType.bulkCreate([
+      { type: 'radio' },
+      { type: 'checkbox' },
+      { type: 'open' },
+    ]);
+
+    QuizType.bulkCreate([
+      { type: 'Nauka' },
+      { type: 'Ciekawostki' },
+      { type: 'Trudne' },
+    ]); */
   })
   .catch((err) => {
     console.log('Failed to sync db: ' + err.message);
