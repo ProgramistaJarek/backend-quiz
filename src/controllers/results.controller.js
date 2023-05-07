@@ -129,15 +129,11 @@ const getQeustions = async (id, userId) => {
     throw new error.BadRequestError('nie możesz wypełnić tego quizu');
 
   const questionsByQuizId = await QuestionsModel.findAll({
-    attributes: [
-      'id',
-      'questionId',
-      [Sequelize.col('QuestionType.type'), 'type'],
-    ],
+    attributes: ['id', 'questionId'],
     include: [
       {
         model: QuestionTypesModel,
-        attributes: [],
+        attributes: ['type'],
       },
     ],
     where: { quizId: { [Op.eq]: quizId } },
@@ -162,8 +158,8 @@ const returnScore = async (req, res) => {
   const { quiz, questions, playerName } = req.body;
   const userId = req.user.id;
 
-  const quizQeustions = await getQeustions(quiz.id, userId);
-  const score = calculateScore(quizQeustions, questions);
+  const quizQuestions = await getQeustions(quiz.id, userId);
+  const score = calculateScore(quizQuestions, questions);
 
   const created = await ResultsModel.create({
     quizId: quiz.id,
@@ -192,16 +188,20 @@ const calculateScore = (quizQuestions, userQuestions) => {
     for (const answer of question.answers) {
       const answerId = answer.answerId;
 
-      if (
-        answer.isCorrect &&
-        userQuestion.answers.some((answer) => answer.answerId === answerId)
-      ) {
-        score++;
-      } else if (
-        !answer.isCorrect &&
-        userQuestion.answers.some((answer) => answer.answerId === answerId)
-      ) {
-        score--;
+      if (typeof userQuestion.answers !== 'string') {
+        if (
+          answer.isCorrect &&
+          userQuestion.answers.some((answer) => answer.answerId === answerId)
+        ) {
+          score++;
+        } else if (
+          !answer.isCorrect &&
+          userQuestion.answers.some((answer) => answer.answerId === answerId)
+        ) {
+          score--;
+        }
+      } else {
+        if (answer.answer === userQuestion.answers) score++;
       }
     }
   }
@@ -212,8 +212,11 @@ const calculateScore = (quizQuestions, userQuestions) => {
 const maxScore = (quizQuestions) => {
   let score = 0;
 
-  for (const question of quizQuestions)
-    for (const answer of question.answers) if (answer.isCorrect) score++;
+  for (const question of quizQuestions) {
+    if (question.question.questionType.type === 'open') {
+      score++;
+    } else for (const answer of question.answers) if (answer.isCorrect) score++;
+  }
 
   return score;
 };
