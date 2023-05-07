@@ -79,7 +79,7 @@ const getQuiz = async (req, res) => {
       'authorId',
       'name',
       'createdAt',
-      [Sequelize.col('quizType.type'), 'type'],
+      [Sequelize.col('quizType.id'), 'type'],
     ],
     include: [{ model: QuizTypesModel, attributes: [] }],
     where: { id: { [Op.eq]: quizId } },
@@ -219,7 +219,7 @@ const updateQuiz = async (req, res) => {
     }
   }
 
-  await quiz.update({ ...body.quiz });
+  await quiz.update({ ...body.quiz, typeId: body.quiz.type });
 
   res.status(201).json({ message: `Quiz has been updated` });
 };
