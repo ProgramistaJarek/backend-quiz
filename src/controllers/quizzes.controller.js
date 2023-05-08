@@ -146,6 +146,7 @@ const createQuiz = async (req, res) => {
 
   const quiz = await QuizzesModel.create({
     ...body.quiz,
+    typeId: body.quiz.type,
     authorId: req.user.id,
   });
 
