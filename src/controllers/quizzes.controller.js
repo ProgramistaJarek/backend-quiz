@@ -139,10 +139,10 @@ const getQuiz = async (req, res) => {
 
 const createQuiz = async (req, res) => {
   const body = req.body;
-  /* if (!helpers.checkIfBodyOfQuizIsCorrect(body))
-    throw new error.BadRequestError('Invalid request body'); */
+  if (!helpers.checkIfBodyOfQuizIsCorrect(body))
+    throw new error.BadRequestError('Invalid request body');
 
-  // helpers.checkQuestions(body.questions);
+  helpers.checkQuestions(body.questions);
 
   const quiz = await QuizzesModel.create({
     ...body.quiz,
@@ -188,10 +188,10 @@ const updateQuiz = async (req, res) => {
 
   helpers.checkIfNumber(quizId);
 
-  /* if (!helpers.checkIfBodyOfQuizIsCorrect(body))
+  if (!helpers.checkIfBodyOfQuizIsCorrect(body))
     throw new error.BadRequestError('Invalid request body');
 
-  helpers.checkQuestions(body.questions); */
+  helpers.checkQuestions(body.questions);
 
   const quiz = await QuizzesModel.findOne({
     where: { id: { [Op.eq]: quizId } },
