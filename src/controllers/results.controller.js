@@ -15,8 +15,8 @@ const getResults = async (req, res) => {
   const ranking = await ResultsModel.findAll({
     attributes: [
       'quizId',
-      [Sequelize.col('Quiz.name'), 'name'],
-      [Sequelize.col('Quiz->quizType.type'), 'type'],
+      [Sequelize.col('quiz.name'), 'name'],
+      [Sequelize.col('quiz->quizType.type'), 'type'],
       'playerName',
       'score',
       'createdAt',
@@ -59,9 +59,9 @@ const getResultsMost = async (req, res) => {
     attributes: [
       'quizId',
       [Sequelize.fn('COUNT', Sequelize.col('score')), 'Count'],
-      [Sequelize.col('Quiz.name'), 'name'],
-      [Sequelize.col('Quiz.createdAt'), 'createdAt'],
-      [Sequelize.col('Quiz->quizType.type'), 'type'],
+      [Sequelize.col('quiz.name'), 'name'],
+      [Sequelize.col('quiz.createdAt'), 'createdAt'],
+      [Sequelize.col('quiz->quizType.type'), 'type'],
     ],
     where: {
       score: { [Op.ne]: null },
@@ -91,9 +91,9 @@ const getResultsByUserId = async (req, res) => {
       'quizId',
       'playerName',
       'score',
-      [Sequelize.col('Quiz.name'), 'name'],
-      [Sequelize.col('Quiz->quizType.type'), 'type'],
-      [Sequelize.col('Quiz.createdAt'), 'createdAt'],
+      [Sequelize.col('quiz.name'), 'name'],
+      [Sequelize.col('quiz->quizType.type'), 'type'],
+      [Sequelize.col('quiz.createdAt'), 'createdAt'],
     ],
     where: {
       score: { [Op.ne]: null },

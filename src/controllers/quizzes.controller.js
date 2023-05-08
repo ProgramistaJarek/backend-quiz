@@ -106,7 +106,7 @@ const getQuiz = async (req, res) => {
       'questionId',
       'question',
       'path',
-      [Sequelize.col('QuestionType.type'), 'type'],
+      [Sequelize.col('questionType.type'), 'type'],
     ],
     include: [
       {
