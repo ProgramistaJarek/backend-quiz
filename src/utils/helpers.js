@@ -1,11 +1,6 @@
 const error = require('../errors/');
 
 const validQuestionTypes = ['checkbox', 'radio', 'open'];
-const numberOfAnswers = {
-  checkbox: 2,
-  radio: 1,
-  open: 1,
-};
 
 const checkIfNumber = (number) => {
   if (isNaN(number)) {
@@ -42,7 +37,6 @@ const checkIfBodyOfQuizIsCorrect = (body) => {
       typeof question.question !== 'object' ||
       typeof question.question.question !== 'string' ||
       typeof question.question.type !== 'string' ||
-      typeof question.question.questionId !== 'number' ||
       !validQuestionTypes.includes(question.question.type)
     ) {
       return false;
@@ -62,8 +56,7 @@ const checkIfBodyOfQuizIsCorrect = (body) => {
         typeof answer !== 'object' ||
         typeof answer.answer !== 'string' ||
         (typeof answer.isCorrect !== 'number' &&
-          typeof answer.isCorrect !== 'boolean') ||
-        (typeof answer.path !== 'string' && answer.path !== null)
+          typeof answer.isCorrect !== 'boolean')
       ) {
         return false;
       }
@@ -75,7 +68,7 @@ const checkIfBodyOfQuizIsCorrect = (body) => {
 
 const checkQuestions = (questions) => {
   for (const data of questions) {
-    if (data.answers.length <= 1) {
+    if (data.answers.length < 1) {
       throw new error.BadRequestError('Error! Something went wrong.');
     }
     let countCorrectNumberOfAnswers = 0;
@@ -89,7 +82,15 @@ const checkQuestions = (questions) => {
         countCorrectNumberOfAnswers++;
       }
     }
-    if (data.question.type === 'checkbox' || data.question.type === 'open') {
+
+    if (countCorrectNumberOfAnswers < 1) {
+      console.log(countCorrectNumberOfAnswers);
+      throw new error.BadRequestError(
+        'Error! Amount of answers is not correct.',
+      );
+    }
+
+    /* if (data.question.type === 'checkbox' || data.question.type === 'open') {
       if (
         countCorrectNumberOfAnswers < minNumberOfAnswers ||
         countCorrectNumberOfAnswers === 0
@@ -106,7 +107,7 @@ const checkQuestions = (questions) => {
       throw new error.BadRequestError(
         'Error! Amount of answers is not correct.',
       );
-    }
+    } */
   }
 };
 
